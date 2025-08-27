@@ -86,6 +86,29 @@ def login_view(request):
         form = forms.LoginForm()
     return render(request, 'auth/login.html', {'form': form})
 
+def account_view(request):
+    user = request.user
+    context = {
+        "user": user,
+        "profile": models.UserProfile.objects.filter(user = user)
+    }
+    return render(request, 'auth/account.html', context)
+
+def account_delete(request):
+    user = request.user
+    if request.method == "POST":
+        user_model_reference = User.objects.filter(username = user.username)
+        user_model_reference.delete()
+        return redirect('register')
+    return render(request, 'auth/account_delete.html')
+
 #* ===== APP ===== *#
 def dashboard(request):
     return render(request, 'app/dashboard.html')
+
+def map(request):
+    beaches = list(models.BeachLocation.objects.values('latitude', 'longtitude')[:100])
+    context = {
+        'beaches': beaches
+    }
+    return render(request, 'app/map.html', context)

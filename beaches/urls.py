@@ -7,6 +7,7 @@ urlpatterns = [
     path('auth/login/', views.login_view, name='login'),
     path('auth/logout/confirm', views.logout_view, name='logout'),
     #* APP URLS
-    path('app/dashboard/', views.dashboard, name='dashboard')
+    path('app/dashboard/', views.dashboard, name='dashboard'),
+    path('app/map/', views.map, name='map')
     #* MISC
 ]
