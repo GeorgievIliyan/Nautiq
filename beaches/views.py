@@ -1,4 +1,6 @@
+from django.http import JsonResponse, Http404
 from django.shortcuts import render, redirect
+from django.core.serializers import serialize
 from validators.numbers_validator import is_valid_number as has_number
 from validators.uppercase_validator import is_valid_uppercase as has_uppercase
 from django.contrib.auth import login, logout, authenticate
@@ -106,9 +108,30 @@ def account_delete(request):
 def dashboard(request):
     return render(request, 'app/dashboard.html')
 
-def map(request):
-    beaches = list(models.BeachLocation.objects.values('latitude', 'longtitude')[:100])
+def map_view(request):
+    beaches = models.BeachLocation.objects.all()
     context = {
-        'beaches': beaches
+        "beaches": list(beaches.values("id", "latitude", "longitude"))
     }
-    return render(request, 'app/map.html', context)
+    return render(request, "app/map.html", context)
+
+def beach_data(request, beach_id):
+    try:
+        beach_location = models.BeachLocation.objects.get(pk=beach_id)
+        
+        beach = models.Beach.objects.filter(location=beach_location).first()
+        name = beach.name if beach else "Unknown Beach"
+
+        data = {
+            'id': beach_location.id,
+            'name': name,
+            'latitude': beach_location.latitude,
+            'longitude': beach_location.longitude,
+        }
+        return JsonResponse(data)
+
+    except models.BeachLocation.DoesNotExist:
+        raise Http404("Beach location not found")
+    
+def beach_add(request):
+    return render(request, 'app/beaches/beach_add.html')

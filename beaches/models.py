@@ -1,4 +1,5 @@
 from django.db import models
+from uuid32 import uuid32
 from django.contrib.auth.models import User
 
 #* ===== USER PROFILE & AUTH MODELS ===== *#
@@ -11,9 +12,9 @@ class UserProfile(models.Model):
 #* ===== APP MODELS ===== *#
 class BeachLocation(models.Model):
     latitude = models.FloatField()
-    longtitude = models.FloatField()
+    longitude = models.FloatField()
     def __str__(self):
-        return (f"{self.longtitude} {self.latitude}")
+        return (f"{self.longitude} {self.latitude}")
     
 class Beach(models.Model):
     name = models.CharField(max_length=50)
