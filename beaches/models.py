@@ -1,28 +1,85 @@
 from django.db import models
-from uuid32 import uuid32
+import uuid
 from django.contrib.auth.models import User
 
 #* ===== USER PROFILE & AUTH MODELS ===== *#
 class UserProfile(models.Model):
+    
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    
     nickname = models.CharField(max_length=50, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     def __str__(self):
         return self.user.username
     
+class ModeratorProfile(models.Model):
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    def __str__(self):
+        return (f"{self.user.first_name} {self.user.last_name}")
+    
 #* ===== APP MODELS ===== *#
 class BeachLocation(models.Model):
+    
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    
     latitude = models.FloatField()
     longitude = models.FloatField()
     def __str__(self):
         return (f"{self.longitude} {self.latitude}")
     
 class Beach(models.Model):
+    has_been_approved = models.BooleanField(default=False)
+    
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    
     name = models.CharField(max_length=50)
+    description = models.TextField(max_length=250, null=True, blank=True)
     location = models.ForeignKey(BeachLocation, on_delete=models.SET_NULL, null=True)
+    
+    #* SAFETY
+    has_lifeguard = models.BooleanField(default=False)
+    
+    #* PARKING & CAR RELATED
+    has_parking = models.BooleanField(default=False)
+    has_paid_parking = models.BooleanField(default=False)
+    
+    #MISC
+    has_toilets = models.BooleanField(default=False)
+    has_changing_rooms = models.BooleanField(default=False)
+    
+    # LUXURIES
+    has_paid_zone = models.BooleanField(default=False)
+    has_beach_bar = models.BooleanField(default=False)
+    
     def __str__(self):
         return (F"{self.name}: {self.location}")
     
 class BeachLog(models.Model):
+    
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    
     WATER_CLARITY_CHOICES = (
         ('clear','Ясна'),
         ('murky','Мътна'),
@@ -127,14 +184,6 @@ class BeachLog(models.Model):
         blank=True
     )
     
-    note = models.TextField(max_length=300, blank=True)
-    
-    # SAFETY
-    has_lifegard = models.BooleanField(default=False)
-    
-    # PARKING & CAR RELATED
-    has_parking = models.BooleanField(default=False)
-    has_paid_parking = models.BooleanField(default=False)
     parking_space = models.CharField(
         max_length=20,
         choices=PARKING_SPACE_CHOICES,
@@ -142,13 +191,7 @@ class BeachLog(models.Model):
         blank=True
     )
     
-    #MISC
-    has_toitlets = models.BooleanField(default=False)
-    has_changing_rooms = models.BooleanField(default=False)
-    
-    # LUXURIES
-    has_paid_zone = models.BooleanField(default=False)
-    has_beach_bar = models.BooleanField(default=False)
+    note = models.TextField(max_length=300, blank=True)
     
     def __str__(self):
         return f"Log for {self.beach.name} on {self.date.strftime('%Y-%m-%d')} by {self.user.username}"

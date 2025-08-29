@@ -6,7 +6,9 @@ from validators.uppercase_validator import is_valid_uppercase as has_uppercase
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.shortcuts import render, get_object_or_404
 from . import models
+import json
 from . import forms
 
 #* ===== AUTHENTICATION ===== *#
@@ -88,6 +90,30 @@ def login_view(request):
         form = forms.LoginForm()
     return render(request, 'auth/login.html', {'form': form})
 
+def moderator_login(request):
+    if request.method == "POST":
+        form = forms.ModeratorLoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            
+            if not User.objects.filter(username = username).exists():
+                messages.error(request, 'Неправилно потребителско име или профил с това потребителско име не съществува.')
+                return render(request, 'auth/moderator/login_mod.html', {'form':form})
+            
+            user = authenticate(username = username, password = password)
+            
+            if user is None:
+                messages.error(request, 'Възникна грешка! Моля опитайте отново.')
+                return render(request, 'auth/login.html', {'form':form})
+            else:
+                login(request, user)
+                messages.success(request, "Успешно влизане в профила!")
+                return redirect('dashboard')
+    else:
+        form = forms.LoginForm()
+    return render(request, 'auth/moderator/login_mod.html', {'form': form})
+
 def account_view(request):
     user = request.user
     context = {
@@ -117,10 +143,10 @@ def map_view(request):
 
 def beach_data(request, beach_id):
     try:
-        beach_location = models.BeachLocation.objects.get(pk=beach_id)
+        beach_location = models.BeachLocation.objects.get(id=beach_id)
         
         beach = models.Beach.objects.filter(location=beach_location).first()
-        name = beach.name if beach else "Unknown Beach"
+        name = beach.name if beach else "Плаж без име"
 
         data = {
             'id': beach_location.id,
@@ -134,4 +160,49 @@ def beach_data(request, beach_id):
         raise Http404("Beach location not found")
     
 def beach_add(request):
-    return render(request, 'app/beaches/beach_add.html')
+    if request.method == "POST":
+        form = forms.BeachAddForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+            image = form.cleaned_data['image']
+            name = form.cleaned_data['name']
+            description = form.cleaned_data['description']
+            has_lifeguard = form.cleaned_data['has_lifeguard']
+            has_parking = form.cleaned_data['has_parking']
+            has_paid_parking = form.cleaned_data['has_paid_parking']
+            has_toilets = form.cleaned_data['has_toilets']
+            has_changing_rooms = form.cleaned_data['has_changing_rooms']
+            has_paid_zone = form.cleaned_data['has_paid_zone']
+            has_beach_bar = form.cleaned_data['has_beach_bar']
+            
+            try:
+                models.Beach.objects.create(
+                    name = name,
+                    description = description,
+                    has_lifeguard = has_lifeguard,
+                    has_parking = has_parking,
+                    has_paid_parking = has_paid_parking,
+                    has_toilets = has_toilets,
+                    has_changing_rooms = has_changing_rooms,
+                    has_paid_zone = has_paid_zone,
+                    has_beach_bar = has_beach_bar
+                )
+                messages.success(request, 'Добавите плаж успешно. Изчаква одобрение от администратор.')
+                return redirect('map')
+            except Exception as e:
+                print(f"Error while trying to add a beach: {e}")
+                messages.error(request, 'Нещо се обърка! Не успяхме да добавим този плаж към картата. Моля, опитайте отново')
+                return render(request, 'app/beaches/beach_add.html', {'form': form})
+    else:
+        form = forms.BeachAddForm()
+    return render(request, 'app/beaches/beach_add.html', {'form': form})
+
+
+#* ===== MODERATOR & MODERATION ===== *#
+def dashboard_mod(request):
+    pending_beaches = models.Beach.objects.filter(has_been_approved=False)
+
+    context = {
+        'pending': pending_beaches
+    }
+    return render(request, 'app/moderator/dashboard_mod.html', context)

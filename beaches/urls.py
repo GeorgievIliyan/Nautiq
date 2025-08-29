@@ -9,7 +9,11 @@ urlpatterns = [
     #* APP URLS
     path('app/dashboard/', views.dashboard, name='dashboard'),
     path('app/map/', views.map_view, name='map'),
-    path("app/beach/<int:beach_id>/", views.beach_data, name="beach_data"),
-    path('app/beach/add/', views.beach_add, name='beach_add')
+    path("app/beach/<uuid:beach_id>/", views.beach_data, name="beach_data"),
+    path('add-location/', views.add_location, name="add_location"),
+    path('app/beach/add/', views.beach_add, name='beach_add'),
+    #* MODERATION
+    path('moderation/login/', views.moderator_login, name='login_mod'),
+    path('moderation/dashboard/', views.dashboard_mod, name='dashborad_mod')
     #* MISC
 ]
