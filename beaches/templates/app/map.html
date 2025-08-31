@@ -10,19 +10,22 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!--CSS-->
     <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <!--BOOTSTRAP-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <!--BOOTSTRAP ICONS-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 </head>
 <body>
-    <div id="map" style="height: 600px; width: 600px;"></div>
+    <div id="map" style="height: 600px; width: 600px;" data-beach-add-url="{% url 'beach_add' %}"></div>
 
     <div style="display: flex; height: 500px;">
         <div id="map" style="flex: 3;"></div>
         <div id="sidebar" style="flex: 1; padding: 10px; border-left: 1px solid #ccc;">
-            <h2>Beach Info</h2>
-            <p>Click a marker to see details here.</p>
+            <h2>Информация за плажове</h2>
+            <p>Натиснете върху плаж, за да разгледате детайли</p>
         </div>
     </div>
-
-
+    
     {{ beaches|json_script:"beaches_json"}}
 
     <script>
@@ -43,7 +46,7 @@
                     map.removeLayer(userMarker);
                 }
 
-        userMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+                userMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
 
                 userMarker.bindPopup(`
                     <b>Маркер</b><br>
@@ -53,10 +56,6 @@
                 `);
 
                 userMarker.openPopup();
-
-                // fetch(`/app/user_marker_info/?lat=${e.latlng.lat}&lng=${e.latlng.lng}`)
-                //     .then(response => response.json())
-                //     .then(data => userMarker.bindPopup(`<b>${data.name}</b><br>${data.details}`).openPopup());
             });
 
             beaches.forEach(beach => {
@@ -71,14 +70,28 @@
                             return response.json();
                         })
                         .then(data => {
+
                             this.bindPopup(`<b>${data.name}</b>`).openPopup();
 
                             const sidebar = document.getElementById("sidebar");
                             if (sidebar) {
                                 sidebar.innerHTML = `
                                     <h2>${data.name}</h2>
-                                    <p>${data.details}</p>
+                                    <p>${data.description}</p>
+                                    <p>Платена зона: ${data.has_paid_zone}</p>
+                                    <p>Паркинг: ${data.has_parking}</p>
+                                    <p>Платен паркинг: ${data.has_paid_parking}</p>
+                                    <p>Заведения: ${data.has_beach_bar}</p>
+                                    <p>Съблекални: ${data.has_changing_rooms}</p>
+                                    <p>Тоалетни: ${data.has_toilets}</p>
+                                    <a class="btn btn-primary">Докладвайте данни за този плаж</a>
+                                    <a id="report-link" class="btn btn-danger mt-3" href="#" data-url-base="{% url 'report_beach' '00000000-0000-0000-0000-000000000000' %}">Докладвайте проблем с този плаж</a>
                                 `;
+
+                                const reportLink = document.getElementById('report-link');
+                                const urlBase = reportLink.getAttribute('data-url-base');
+                                const newUrl = urlBase.replace('00000000-0000-0000-0000-000000000000', data.pk);
+                                reportLink.href = newUrl;
                             }
                         })
                         .catch(error => {
@@ -88,7 +101,11 @@
                 });
             });
         }
+
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
 </body>
 </html>
 

@@ -12,6 +12,10 @@
         {% csrf_token %}
             {% for field in form %}
                 <div class="mb-3">
+                    <input type="hidden" name="latitude" id="id_latitude" value="{{ form.initial.latitude }}">
+                    <input type="hidden" name="longitude" id="id_longitude" value="{{ form.initial.longitude }}">
+                </div>
+                <div class="mb-3">
                     {% if field.field.widget.input_type == "checkbox" %}
                     <div class="form-check">
                         <label class="form-check-label" for="{{ field.id_for_label }}">

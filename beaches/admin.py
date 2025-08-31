@@ -4,6 +4,5 @@ from . import models
 # Register your models here.
 admin.site.register(models.UserProfile)
 admin.site.register(models.ModeratorProfile)
-admin.site.register(models.BeachLocation)
 admin.site.register(models.Beach)
 admin.site.register(models.BeachLog)

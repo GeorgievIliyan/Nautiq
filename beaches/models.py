@@ -13,6 +13,8 @@ class UserProfile(models.Model):
     
     nickname = models.CharField(max_length=50, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    xp = models.IntegerField(default=0)
+    
     def __str__(self):
         return self.user.username
     
@@ -28,21 +30,9 @@ class ModeratorProfile(models.Model):
         return (f"{self.user.first_name} {self.user.last_name}")
     
 #* ===== APP MODELS ===== *#
-class BeachLocation(models.Model):
-    
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
-    
-    latitude = models.FloatField()
-    longitude = models.FloatField()
-    def __str__(self):
-        return (f"{self.longitude} {self.latitude}")
-    
 class Beach(models.Model):
     has_been_approved = models.BooleanField(default=False)
+    approved_date = models.DateTimeField(null=True, blank=True)
     
     id = models.UUIDField(
         primary_key=True,
@@ -52,7 +42,8 @@ class Beach(models.Model):
     
     name = models.CharField(max_length=50)
     description = models.TextField(max_length=250, null=True, blank=True)
-    location = models.ForeignKey(BeachLocation, on_delete=models.SET_NULL, null=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     
     #* SAFETY
     has_lifeguard = models.BooleanField(default=False)
@@ -70,7 +61,7 @@ class Beach(models.Model):
     has_beach_bar = models.BooleanField(default=False)
     
     def __str__(self):
-        return (F"{self.name}: {self.location}")
+        return (F"{self.name}: {self.latitude},{self.longitude}")
     
 class BeachLog(models.Model):
     
@@ -198,3 +189,37 @@ class BeachLog(models.Model):
     
     class Meta:
         ordering = ['-date']
+
+        
+class BeachReport(models.Model):
+    REPORT_CATEGORIES = {
+        ('Неправилна информация','inc_info'),
+        ('Обидно съдържание','ins_cont'),
+        ('Грещно местоположение','inc_loc'),
+        ('Друго','other')
+    }
+    beach = models.ForeignKey(Beach, on_delete=models.CASCADE)
+    submitted_by = models.ForeignKey(User,on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+    title = models.CharField(max_length=50)
+    description = models.CharField(max_length=500)
+    category = models.CharField(choices=REPORT_CATEGORIES, max_length=21)
+    resolved = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return (f"Report \"{self.title}\", made by {self.submitted_by.username} on {self.date}.")
+    
+class BeachImage(models.Model):
+    title = models.CharField(max_length=100, null=True, blank=True)
+    image = models.ImageField(null=False, blank=False)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return (f"Image \"{self.title}\" created on {self.date} by {self.user.user.username}.")
+    
+class Badge(models.Model):
+    title = models.CharField(max_length=50)
+    image = models.ImageField()
+    desc = models.TextField()
+    def __str__(self):
+        return self.title

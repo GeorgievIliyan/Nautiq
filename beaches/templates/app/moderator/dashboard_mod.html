@@ -1,4 +1,5 @@
 {% load widget_tweaks %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,14 +7,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SeaSight | Moderator Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
 </head>
 <body>
-    <pre>{{ pending }}</pre>
-
+    <h1>Плажове: </h1>
     {% for beach in pending %}
-        <p>{{ beach.name }}</p>
+        <div class="card">
+            <h2>Име: {{ beach.name }}</h2>
+            <p>Описание: {{ beach.description }}</p>
+
+            <p>Спасител: {{ beach.has_lifeguard|yesno:"Да,Не" }}</p>
+
+            <p>Паркинг: {{ beach.has_parking|yesno:"Да,Не" }}</p>
+            <p>Платен Паркинг: {{ beach.has_paid_parking|yesno:"Да,Не" }}</p>
+
+            <p>Тоалетни: {{ beach.has_toilets|yesno:"Да,Не" }}</p>
+            <p>Съблекални: {{ beach.has_changing_rooms|yesno:"Да,Не" }}</p>
+
+            <p>Платена зона: {{ beach.has_paid_zone|yesno:"Да,Не" }}</p>
+            <p>Заведения: {{ beach.has_beach_bar|yesno:"Да,Не" }}</p>
+
+            <a class="btn btn-success">Одобри</a>
+            <a class="btn btn-warning">Редактирай</a>
+        </div>
     {% empty %}
-        <p>No pending beaches.</p>
+        <p>За сега няма плажове в опашката...</p>
+    {% endfor %}
+
+    <h1>Докладвани проблеми: </h1>
+    {% for report in reports %}
+        <div class="card">
+            <h2 class="mb-3">{{ report.title }}</h2>
+            <p class="text-sm">Подадено от: {{ report.submitted_by.username }}</p>
+            <p>Категория: {{ report.category }}</p>
+            <p>{{ report.description }}</p>
+        </div>
+    {% empty %}
+        <p>За сега няма нови доклади...</p>
     {% endfor %}
 
 </body>
