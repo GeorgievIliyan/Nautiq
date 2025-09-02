@@ -9,9 +9,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <!--BOOTSTRAP ICONS-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 </head>
-<body>
-    <h1>Плажове: </h1>
+<body class="container py-5">
+    <h2 class="mb-3">Плажове: </h2>
     {% for beach in pending %}
         <div class="card">
             <h2>Име: {{ beach.name }}</h2>
@@ -35,17 +37,36 @@
         <p>За сега няма плажове в опашката...</p>
     {% endfor %}
 
-    <h1>Докладвани проблеми: </h1>
+    <h2 class="mb-3">Докладвани проблеми: </h2>
     {% for report in reports %}
-        <div class="card">
-            <h2 class="mb-3">{{ report.title }}</h2>
-            <p class="text-sm">Подадено от: {{ report.submitted_by.username }}</p>
-            <p>Категория: {{ report.category }}</p>
-            <p>{{ report.description }}</p>
+        <div class="card p-3">
+            <h3 class="mb-4">{{ report.title }}</h3>
+            <p class="text-sm">Плаж: <span class="text-primary">{{ report.beach.name}}</span>, id: <span class="text-primary">{{ report.beach.id|stringformat:"s" }}</span></p>
+            <p class="text-sm">Подадено от: <span class="text-primary">{{ report.submitted_by.username}}, {{ report.date}}</span></p>
+            <p>Категория: <span class="text-primary">{{ report.category }}</span></p>
+            {% if report.description %}
+            <p>Описание: <br><span class="text-primary">{{ report.description }}</span></p>
+            {% else %}
+            <p>Няма описание...</p>
+            {% endif %}
+
+            <div class="d-flex flex-row gap-2">
+                <a href="{% url 'report_resolve' report.id %}" class="btn btn-success">Означи като разрешено <i class="bi bi-check2-circle"></i></a>
+                <a href="#" class="btn btn-warning">Прегледай <i class="bi bi-eye"></i></a>
+                <a href="{% url 'report_delete' report.id %}" class="btn btn-danger">Изтрии <i class="bi bi-trash3-fill"></i></a>
+            </div>
         </div>
     {% empty %}
-        <p>За сега няма нови доклади...</p>
+    <p>За сега няма докладвани проблеми...</p>
     {% endfor %}
-
+    <!--
+    beach = models.ForeignKey(Beach, on_delete=models.CASCADE)
+    submitted_by = models.ForeignKey(User,on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+    title = models.CharField(max_length=50)
+    description = models.CharField(max_length=500)
+    category = models.CharField(choices=REPORT_CATEGORIES, max_length=21)
+    resolved = models.BooleanField(default=False)
+    -->
 </body>
 </html>

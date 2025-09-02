@@ -230,14 +230,25 @@ def report_beach(request, beach_id):
                 )
                 messages.success(request, 'Успешно подадено докладване!')
                 return redirect('map')
-            except:
+            except Exception as e:
+                print(f"Error while trying to submit report: {e}")
                 messages.error(request, 'Възникна грешка! Моля, опитайте отново.')
-                return render(request, 'app/report/report_add.html')
+                return render(request, 'app/reports/report_add.html', {'form': form})
     else:
         form = forms.ReportBeachForm()
     
-    return render(request, 'app/reports/report_add.html')
+    return render(request, 'app/reports/report_add.html', {'form':form})
 
+def report_mark_as_resolved(request, report_id):
+    beach = get_object_or_404(models.BeachReport, id = report_id)
+    beach.resolved = True
+    beach.save()
+    return redirect("moderation_dashboard")
+    
+def report_delete(request, report_id):
+    beach = get_object_or_404(models.BeachReport, id = report_id)
+    beach.delete()
+    return redirect("moderation_dashboard")
 
 #* ====== BEACH LOGGING ===== *#
 

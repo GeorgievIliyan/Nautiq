@@ -14,6 +14,8 @@ urlpatterns = [
     #* MODERATION
     path('moderation/dashboard/', views.dashboard_mod, name='dashborad_mod'),
     #* REPORTING
-    path("app/report-beach/<uuid:beach_id>/", views.report_beach, name="report_beach")
+    path("app/report-beach/<uuid:report_id>/", views.report_beach, name="report_beach"),
+    path('app/report-beach/mark-as-resolved/<uuid:report_id>/', views.report_mark_as_resolved, name="report_resolve"),
+    path('app/report-beach/delete/<uuid:report_id>/', views.report_delete, name='report_delete')
     #* MISC
 ]

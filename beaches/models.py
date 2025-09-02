@@ -192,12 +192,13 @@ class BeachLog(models.Model):
 
         
 class BeachReport(models.Model):
-    REPORT_CATEGORIES = {
-        ('Неправилна информация','inc_info'),
-        ('Обидно съдържание','ins_cont'),
-        ('Грещно местоположение','inc_loc'),
-        ('Друго','other')
-    }
+    REPORT_CATEGORIES = (
+        ('inc_loc', 'Неправилно местоположение'),
+        ('inc_info', 'Неточна информация'),
+        ('ins_cont', 'Обидна информация'),
+        ('other', 'Друго'),
+    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     beach = models.ForeignKey(Beach, on_delete=models.CASCADE)
     submitted_by = models.ForeignKey(User,on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)

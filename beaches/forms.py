@@ -30,8 +30,18 @@ class BeachEditForm(forms.ModelForm):
 class ReportBeachForm(forms.Form):
     REPORT_CHOICES = models.BeachReport.REPORT_CATEGORIES
     title = forms.CharField(max_length=60, required=True, label="Заглавие на доклада: ")
-    description = forms.CharField(max_length=500, required=False, label="Описание на проблема: ", help_text="*незадължително")
-    category = forms.ChoiceField(choices=REPORT_CHOICES, required=True, label="Изберете категория за доклада: ")
+    category = forms.ChoiceField(
+        choices=REPORT_CHOICES,
+        required=True,
+        label="Изберете категория за доклада: "
+    )
+    description = forms.CharField(
+        max_length=500,
+        required=False,
+        label="Описание на проблема: ",
+        help_text="*незадължително",
+        widget=forms.Textarea(attrs={'rows': 4})
+    )
 
 #* ===== BEACH LOGGING ===== *#
 class LogBeachForm(forms.Form):
