@@ -254,7 +254,47 @@ def report_delete(request, report_id):
 
 def log_beach(request, beach_id):
     if request.method == "POST":
-        pass
+        form = forms.LogBeachForm(request.POST, request.FILES)
+        user = request.user
+        beach = get_object_or_404(models.Beach, id = beach_id)
+        
+        if form.is_valid():
+            image_file = form.cleaned_data['image']
+            
+            crowd_level = form.cleaned_data['crowd_level']
+            water_clarity = form.cleaned_data['water_clarity']
+            water_temp = form.cleaned_data['water_temp']
+            weather = form.cleaned_data['weather']
+            algae = form.cleaned_data['algae']
+            parking_space = form.cleaned_data['parking_space']
+            waves = form.cleaned_data['waves']
+            note = form.cleaned_data['note']
+            
+            if image_file:
+                beach_image_instance = models.BeachImage.objects.create(
+                    beach=beach,
+                    user=request.user,
+                    title=image_file.name,
+                    image=image_file,
+                )
+            
+            try:
+                models.BeachLog.objects.create(
+                    beach = beach,
+                    user = user,
+                    image = beach_image_instance,
+                    crowd_level = crowd_level,
+                    water_clarity = water_clarity,
+                    water_temp = water_temp,
+                    weather = weather,
+                    algae = algae,
+                    parking_space = parking_space,
+                    waves = waves,
+                    note = note
+                )
+            except:
+                messages.error(request, 'Възникна грешка! Моля опитайте отново!')
+                return render(request, 'app/logs/log_add.html', {'form': form})
     else:
-        form = forms.LO
-    return render(request, 'app/log/log_add.html')
+        form = forms.LogBeachForm()
+    return render(request, 'app/logs/log_add.html', {'form': form})

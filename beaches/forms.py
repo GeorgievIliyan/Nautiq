@@ -46,3 +46,54 @@ class ReportBeachForm(forms.Form):
 #* ===== BEACH LOGGING ===== *#
 class LogBeachForm(forms.Form):
     image = forms.ImageField(required=True, label="Снимка")
+    
+    # Conditions
+    crowd_level = forms.ChoiceField(
+        choices=models.BeachLog.CROWD_LEVEL_CHOICES,
+        required=True,
+        label="Количество хора: "
+    )
+    
+    water_clarity = forms.ChoiceField(
+        choices=models.BeachLog.WATER_CLARITY_CHOICES,
+        required=True,
+        label="Ниво на чистотата на водата: "
+    )
+    
+    water_temp = forms.ChoiceField(
+        choices= models.BeachLog.WATER_TEMPERATURE_CHOICES,
+        required=True,
+        label='Температура на водата: '
+    )
+    
+    weather = forms.ChoiceField(
+        choices=models.BeachLog.WEATHER_CONDITION_CHOICES,
+        required=True,
+        label="Време: "
+    )
+    
+    algae = forms.ChoiceField(
+        choices=models.BeachLog.ALGAE_VOLUME_CHOICES,
+        required=True,
+        label="Водорасли: ",
+    )
+    
+    parking_space = forms.ChoiceField(
+        required=True,
+        label="Място за паркиране: ",
+        choices=models.BeachLog.PARKING_SPACE_CHOICES
+    )
+    
+    waves = forms.ChoiceField(
+        required=True,
+        label="ВЪлни: ",
+        choices=models.BeachLog.WAVE_CHOICES
+    )
+    
+    note = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4}),
+        label='Бележка: ',
+        help_text="*незадължително",
+        required=False,
+        max_length=300
+    )

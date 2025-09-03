@@ -62,7 +62,7 @@
                 const marker = L.marker([beach.latitude, beach.longitude], { markerId: beach.id }).addTo(map);
 
                 marker.on('click', function() {
-                    fetch(`/app/beach/${this.options.markerId}/`, { method: "GET" })
+                    fetch(`/beach/${this.options.markerId}/`, { method: "GET" })
                         .then(response => {
                             if (!response.ok) {
                                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -70,7 +70,6 @@
                             return response.json();
                         })
                         .then(data => {
-
                             this.bindPopup(`<b>${data.name}</b>`).openPopup();
 
                             const sidebar = document.getElementById("sidebar");
@@ -84,19 +83,29 @@
                                     <p>Заведения: ${data.has_beach_bar}</p>
                                     <p>Съблекални: ${data.has_changing_rooms}</p>
                                     <p>Тоалетни: ${data.has_toilets}</p>
-                                    <a class="btn btn-primary">Докладвайте данни за този плаж</a>
+                                    <a id="log-link" class="btn btn-primary" data-url-base="{% url 'log_beach' '00000000-0000-0000-0000-000000000000' %}">Докладвайте данни за този плаж</a>
                                     <a id="report-link" class="btn btn-danger mt-3" href="#" data-url-base="{% url 'report_beach' '00000000-0000-0000-0000-000000000000' %}">Докладвайте проблем с този плаж</a>
                                 `;
 
+                                // Find the links and update their href attributes
+                                const logLink = document.getElementById('log-link');
+                                if (logLink) {
+                                    const logUrlBase = logLink.getAttribute('data-url-base');
+                                    const newLogUrl = logUrlBase.replace('00000000-0000-0000-0000-000000000000', data.pk);
+                                    logLink.href = newLogUrl;
+                                }
+
                                 const reportLink = document.getElementById('report-link');
-                                const urlBase = reportLink.getAttribute('data-url-base');
-                                const newUrl = urlBase.replace('00000000-0000-0000-0000-000000000000', data.pk);
-                                reportLink.href = newUrl;
+                                if (reportLink) {
+                                    const reportUrlBase = reportLink.getAttribute('data-url-base');
+                                    const newReportUrl = reportUrlBase.replace('00000000-0000-0000-0000-000000000000', data.pk);
+                                    reportLink.href = newReportUrl;
+                                }
                             }
                         })
                         .catch(error => {
                             console.error('Fetch error:', error);
-                            this.bindPopup('Error loading data').openPopup();
+                            this.bindPopup('Възникна грешка!').openPopup();
                         });
                 });
             });

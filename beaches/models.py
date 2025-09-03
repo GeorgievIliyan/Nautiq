@@ -18,17 +18,6 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
     
-class ModeratorProfile(models.Model):
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    
-    def __str__(self):
-        return (f"{self.user.first_name} {self.user.last_name}")
-    
 #* ===== APP MODELS ===== *#
 class Beach(models.Model):
     has_been_approved = models.BooleanField(default=False)
@@ -62,6 +51,14 @@ class Beach(models.Model):
     
     def __str__(self):
         return (F"{self.name}: {self.latitude},{self.longitude}")
+    
+class BeachImage(models.Model):
+    title = models.CharField(max_length=100, null=True, blank=True)
+    image = models.ImageField(null=False, blank=False)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return (f"Image \"{self.title}\" created on {self.date} by {self.user.user.username}.")
     
 class BeachLog(models.Model):
     
@@ -123,7 +120,7 @@ class BeachLog(models.Model):
     beach = models.ForeignKey(Beach, on_delete=models.CASCADE)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
-    image = models.ImageField(blank=True, null=True)
+    image = models.ForeignKey(BeachImage, on_delete=models.SET_NULL, blank=True, null=True)
     
     # conditions
     crowd_level = models.CharField(
@@ -209,14 +206,6 @@ class BeachReport(models.Model):
     
     def __str__(self):
         return (f"Report \"{self.title}\", made by {self.submitted_by.username} on {self.date}.")
-    
-class BeachImage(models.Model):
-    title = models.CharField(max_length=100, null=True, blank=True)
-    image = models.ImageField(null=False, blank=False)
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    date = models.DateTimeField(auto_now_add=True)
-    def __str__(self):
-        return (f"Image \"{self.title}\" created on {self.date} by {self.user.user.username}.")
     
 class Badge(models.Model):
     title = models.CharField(max_length=50)
