@@ -1,19 +1,28 @@
-from django.http import JsonResponse, Http404
-from django.shortcuts import render, redirect
+import json
+from datetime import date
+
+# Django imports
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import User
 from django.core.serializers import serialize
+from django.http import Http404, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.utils import timezone
+from django.db.models import Count
+
+# Third-party imports
 from validators.numbers_validator import is_valid_number as has_number
 from validators.uppercase_validator import is_valid_uppercase as has_uppercase
-from django.contrib.auth import login, logout, authenticate
-from django.contrib import messages
-from django.contrib.auth.models import User
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import user_passes_test
-from . import models
-import json
-from django.template.loader import render_to_string
-from django.http import JsonResponse
-from django.utils import timezone
+
+# Local imports
 from . import forms
+from . import models
+
+today_dt = timezone.localdate()
+aware_datetime = timezone.now()
 
 def is_moderator(user):
     return user.is_staff
@@ -120,12 +129,23 @@ def dashboard(request):
 def map_view(request):
     beaches = models.Beach.objects.filter(has_been_approved=True)
     context = {
-        "beaches": list(beaches.values("id", "latitude", "longitude"))
+        "beaches": list(beaches.values("id", "latitude", "longitude")),
     }
     return render(request, "app/map.html", context)
 
 def beach_data(request, beach_id):
     beach = models.Beach.objects.get(id=beach_id)
+    logs = models.BeachLog.objects.filter(beach=beach, date__date=today_dt).count()
+    #AVR for today
+    crowd_level = models.BeachLog.objects.filter(beach__id=beach_id).values('crowd_level').annotate(count=Count('crowd_level')).order_by('-count').first()
+    water_clarity = models.BeachLog.objects.filter(beach__id=beach_id).values('water_clarity').annotate(count=Count('water_clarity')).order_by('-count').first()
+    water_temp = models.BeachLog.objects.filter(beach__id=beach_id).values('water_temp').annotate(count=Count('water_temp')).order_by('-count').first()
+    weather = models.BeachLog.objects.filter(beach__id=beach_id).values('weather').annotate(count=Count('weather')).order_by('-count').first()
+    algae = models.BeachLog.objects.filter(beach__id=beach_id).values('algae').annotate(count=Count('algae')).order_by('-count').first()
+    kids = models.BeachLog.objects.filter(beach__id=beach_id).values('kids').annotate(count=Count('kids')).order_by('-count').first()
+    waves = models.BeachLog.objects.filter(beach__id=beach_id).values('waves').annotate(count=Count('waves')).order_by('-count').first()
+    parking_space = models.BeachLog.objects.filter(beach__id=beach_id).values('parking_space').annotate(count=Count('parking_space')).order_by('-count').first()
+    
     return JsonResponse({
         "pk": str(beach.pk),
         "name": beach.name,
@@ -136,7 +156,16 @@ def beach_data(request, beach_id):
         "has_paid_zone": beach.has_paid_zone,
         "has_beach_bar": beach.has_beach_bar,
         "has_toilets": beach.has_toilets,
-        "has_changing_rooms": beach.has_changing_rooms
+        "has_changing_rooms": beach.has_changing_rooms,
+        "times_logged": logs,
+        "clarity_avr": water_clarity['water_clarity'],
+        'crowd_avr': crowd_level['crowd_level'],
+        'water_temp_avr': water_temp['water_temp'],
+        'weather_avr': weather['weather'],
+        'algae_avr': algae['algae'],
+        'kids_avr': kids['kids'],
+        'waves': waves['waves'],
+        'parking_space': parking_space['parking_space']
     })
     
 def beach_add(request):
@@ -292,7 +321,8 @@ def log_beach(request, beach_id):
                     waves = waves,
                     note = note
                 )
-            except:
+            except Exception as e:
+                print(f"Error while submitting Beach Log: {e}")
                 messages.error(request, 'Възникна грешка! Моля опитайте отново!')
                 return render(request, 'app/logs/log_add.html', {'form': form})
     else:

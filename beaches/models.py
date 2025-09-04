@@ -54,11 +54,12 @@ class Beach(models.Model):
     
 class BeachImage(models.Model):
     title = models.CharField(max_length=100, null=True, blank=True)
+    beach = models.ForeignKey(Beach, on_delete=models.CASCADE, blank=True, null=True)
     image = models.ImageField(null=False, blank=False)
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        return (f"Image \"{self.title}\" created on {self.date} by {self.user.user.username}.")
+        return (f"Image \"{self.title}\" created on {self.date} by {self.user.username}.")
     
 class BeachLog(models.Model):
     
@@ -68,57 +69,57 @@ class BeachLog(models.Model):
         editable=False
     )
     
-    WATER_CLARITY_CHOICES = (
-        ('clear','Ясна'),
-        ('murky','Мътна'),
-        ('cloudy','Облачна'),
-    )
-    CROWD_LEVEL_CHOICES = (
-        ('low','Ниско'),
-        ('meduim','Средно'),
-        ('high','Високо')
-    )
-    WEATHER_CONDITION_CHOICES = (
-        ('cold','Студено'),
-        ('cool','Хладно'),
-        ('normal','Нормално'),
-        ('warm','Топло'),
-        ('hot','Горещо')
-    )
-    WATER_TEMPERATURE_CHOICES = (
-        ('cold','Студена'),
-        ('cool','Хладна'),
-        ('normal','Нормална'),
-        ('warm','Топла'),
-        ('hot','Гореща')
-    )
-    ALGAE_VOLUME_CHOICES = (
-        ('none', 'Няма'),
-        ('low', 'Малко'),
-        ('medium', 'Средно'),
-        ('high', 'Много'),
-    )
-    KIDS_AMOUNT_CHOICES = (
-        ('none', 'Няма'),
-        ('low', 'Малко'),
-        ('medium', 'Средно'),
-        ('high', 'Много'),
+    WAVE_CHOICES = (
+    ('Големи', 'high'),
+    ('Средни', 'medium'),
+    ('Малки', 'small'),
     )
     PARKING_SPACE_CHOICES = (
-        ('none', 'Няма'),
-        ('low', 'Малко'),
-        ('medium', 'Средно'),
-        ('high', 'Много'),
+        ('Много', 'high'),
+        ('Средно', 'medium'),
+        ('Малко', 'low'),
+        ('Няма', 'none'),
     )
-    WAVE_CHOICES = (
-        ('small', 'Малки'),
-        ('medium', 'Средни'),
-        ('high', 'Големи'),
+    KIDS_AMOUNT_CHOICES = (
+        ('Много', 'high'),
+        ('Средно', 'medium'),
+        ('Малко', 'low'),
+        ('Няма', 'none'),
+    )
+    ALGAE_VOLUME_CHOICES = (
+        ('Много', 'high'),
+        ('Средно', 'medium'),
+        ('Малко', 'low'),
+        ('Няма', 'none'),
+    )
+    WATER_TEMPERATURE_CHOICES = (
+        ('Гореща', 'hot'),
+        ('Топла', 'warm'),
+        ('Нормална', 'normal'),
+        ('Хладна', 'cool'),
+        ('Студена', 'cold'),
+    )
+    WEATHER_CONDITION_CHOICES = (
+        ('Горещо', 'hot'),
+        ('Топло', 'warm'),
+        ('Нормално', 'normal'),
+        ('Хладно', 'cool'),
+        ('Студено', 'cold'),
+    )
+    CROWD_LEVEL_CHOICES = (
+        ('Високо', 'high'),
+        ('Средно', 'meduim'),
+        ('Ниско', 'low'),
+    )
+    WATER_CLARITY_CHOICES = (
+        ('Облачна', 'cloudy'),
+        ('Мътна', 'murky'),
+        ('Ясна', 'clear'),
     )
     
     
     beach = models.ForeignKey(Beach, on_delete=models.CASCADE)
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     image = models.ForeignKey(BeachImage, on_delete=models.SET_NULL, blank=True, null=True)
     

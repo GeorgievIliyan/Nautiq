@@ -77,6 +77,7 @@
                                 sidebar.innerHTML = `
                                     <h2>${data.name}</h2>
                                     <p>${data.description}</p>
+                                    <p>Доклади днес: ${data.times_logged}</p>
                                     <p>Платена зона: ${data.has_paid_zone}</p>
                                     <p>Паркинг: ${data.has_parking}</p>
                                     <p>Платен паркинг: ${data.has_paid_parking}</p>
@@ -85,6 +86,16 @@
                                     <p>Тоалетни: ${data.has_toilets}</p>
                                     <a id="log-link" class="btn btn-primary" data-url-base="{% url 'log_beach' '00000000-0000-0000-0000-000000000000' %}">Докладвайте данни за този плаж</a>
                                     <a id="report-link" class="btn btn-danger mt-3" href="#" data-url-base="{% url 'report_beach' '00000000-0000-0000-0000-000000000000' %}">Докладвайте проблем с този плаж</a>
+                                    
+                                    <h3 class="mt-5">Условията днес: </h3>
+                                    <p>Честота на водата: ${data.clarity_avr}</p>
+                                    <p>Количество хора: ${data.clarity_avr}</p>
+                                    <p>Време: ${data.clarity_avr}</p>
+                                    <p>Усещане на водата: ${data.water_temp_avr}</p>
+                                    <p>Водорасли: ${data.clarity_avr}</p>
+                                    <p>Количество деца: ${data.clarity_avr}</p>
+                                    <p>Вълни: ${data.waves}</p>
+                                    <p>Място за паркиране: ${data.parking_space}</p>
                                 `;
 
                                 // Find the links and update their href attributes
