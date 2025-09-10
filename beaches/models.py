@@ -13,6 +13,10 @@ class UserProfile(models.Model):
     
     nickname = models.CharField(max_length=50, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    lat = models.CharField(null=True, blank=True, default=48.8566)
+    lng = models.CharField(null=True, blank=True, default=2.3522)
+    
     xp = models.IntegerField(default=0)
     
     def __str__(self):
@@ -55,7 +59,7 @@ class Beach(models.Model):
 class BeachImage(models.Model):
     title = models.CharField(max_length=100, null=True, blank=True)
     beach = models.ForeignKey(Beach, on_delete=models.CASCADE, blank=True, null=True)
-    image = models.ImageField(null=False, blank=False)
+    image = models.ImageField(null=False, blank=False, upload_to='static/beach_images/')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     def __str__(self):

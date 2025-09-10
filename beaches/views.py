@@ -38,6 +38,8 @@ def register_view(request):
             nickname = form.cleaned_data['nickname']
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
+            lat = form.cleaned_data['lat']
+            lng = form.cleaned_data['lng']
             
             #* Validation & Checks
             if models.UserProfile.objects.filter(nickname = nickname).exists():
@@ -60,14 +62,21 @@ def register_view(request):
                 user = User.objects.create_user(
                     username=username,
                     password=password,
-                    nickname=nickname,
                     email = email
                     )
-                models.UserProfile.objects.create(
-                    user = user
-                )
+                try:
+                    models.UserProfile.objects.create(
+                        user = user,
+                        nickname = nickname,
+                        lat = lat,
+                        lng = lng
+                    )
+                except Exception as user_profile_register_error:
+                    print(f"Error while trying to register user profile (UserProfile): {user_profile_register_error}")
+                    messages.error(request, "Не успяхме да създадем профил! Моля, опитайте отново.")
+                    return render(request, 'auth/register.html', {'form': form})
             except Exception as user_register_error:
-                messages.error(request, "Не успяхме да създадем профил! Моля, опитайте отново.")
+                messages.error(request, "Не успяхме да създадем акаунт! Моля, опитайте отново.")
                 print(f"Error while registering user account: {user_register_error}")
                 return render(request, 'auth/register.html', {'form': form})
             
@@ -127,27 +136,52 @@ def dashboard(request):
     return render(request, 'app/dashboard.html')
 
 def map_view(request):
+    user = request.user
+    try:
+        user_profile = models.UserProfile.objects.get(user=user)
+        user_lat = user_profile.lat
+        user_lng = user_profile.lng
+    except models.UserProfile.DoesNotExist:
+        user_lat = 48.8566
+        user_lng = 2.3522
+
     beaches = models.Beach.objects.filter(has_been_approved=True)
+
     context = {
         "beaches": list(beaches.values("id", "latitude", "longitude")),
+        "user_lat": user_lat,
+        "user_lng": user_lng
     }
     return render(request, "app/map.html", context)
 
 def beach_data(request, beach_id):
     beach = models.Beach.objects.get(id=beach_id)
+
     logs = models.BeachLog.objects.filter(beach=beach, date__date=today_dt).count()
-    #AVR for today
-    crowd_level = models.BeachLog.objects.filter(beach__id=beach_id).values('crowd_level').annotate(count=Count('crowd_level')).order_by('-count').first()
-    water_clarity = models.BeachLog.objects.filter(beach__id=beach_id).values('water_clarity').annotate(count=Count('water_clarity')).order_by('-count').first()
-    water_temp = models.BeachLog.objects.filter(beach__id=beach_id).values('water_temp').annotate(count=Count('water_temp')).order_by('-count').first()
-    weather = models.BeachLog.objects.filter(beach__id=beach_id).values('weather').annotate(count=Count('weather')).order_by('-count').first()
-    algae = models.BeachLog.objects.filter(beach__id=beach_id).values('algae').annotate(count=Count('algae')).order_by('-count').first()
-    kids = models.BeachLog.objects.filter(beach__id=beach_id).values('kids').annotate(count=Count('kids')).order_by('-count').first()
-    waves = models.BeachLog.objects.filter(beach__id=beach_id).values('waves').annotate(count=Count('waves')).order_by('-count').first()
-    parking_space = models.BeachLog.objects.filter(beach__id=beach_id).values('parking_space').annotate(count=Count('parking_space')).order_by('-count').first()
-    
+
+    crowd_level = models.BeachLog.objects.filter(beach__id=beach_id).values('crowd_level')\
+        .annotate(count=Count('crowd_level')).order_by('-count').first()
+    water_clarity = models.BeachLog.objects.filter(beach__id=beach_id).values('water_clarity')\
+        .annotate(count=Count('water_clarity')).order_by('-count').first()
+    water_temp = models.BeachLog.objects.filter(beach__id=beach_id).values('water_temp')\
+        .annotate(count=Count('water_temp')).order_by('-count').first()
+    weather = models.BeachLog.objects.filter(beach__id=beach_id).values('weather')\
+        .annotate(count=Count('weather')).order_by('-count').first()
+    algae = models.BeachLog.objects.filter(beach__id=beach_id).values('algae')\
+        .annotate(count=Count('algae')).order_by('-count').first()
+    kids = models.BeachLog.objects.filter(beach__id=beach_id).values('kids')\
+        .annotate(count=Count('kids')).order_by('-count').first()
+    waves = models.BeachLog.objects.filter(beach__id=beach_id).values('waves')\
+        .annotate(count=Count('waves')).order_by('-count').first()
+    parking_space = models.BeachLog.objects.filter(beach__id=beach_id).values('parking_space')\
+        .annotate(count=Count('parking_space')).order_by('-count').first()
+
+    log = models.BeachLog.objects.filter(beach=beach, date=today_dt).first()
+    log_id = str(log.pk) if log else None
+
     return JsonResponse({
         "pk": str(beach.pk),
+        "log_id": log_id,
         "name": beach.name,
         "description": beach.description,
         "has_lifeguard": beach.has_lifeguard,
@@ -158,14 +192,14 @@ def beach_data(request, beach_id):
         "has_toilets": beach.has_toilets,
         "has_changing_rooms": beach.has_changing_rooms,
         "times_logged": logs,
-        "clarity_avr": water_clarity['water_clarity'],
-        'crowd_avr': crowd_level['crowd_level'],
-        'water_temp_avr': water_temp['water_temp'],
-        'weather_avr': weather['weather'],
-        'algae_avr': algae['algae'],
-        'kids_avr': kids['kids'],
-        'waves': waves['waves'],
-        'parking_space': parking_space['parking_space']
+        "clarity_avr": water_clarity['water_clarity'] if water_clarity else None,
+        "crowd_avr": crowd_level['crowd_level'] if crowd_level else None,
+        "water_temp_avr": water_temp['water_temp'] if water_temp else None,
+        "weather_avr": weather['weather'] if weather else None,
+        "algae_avr": algae['algae'] if algae else None,
+        "kids_avr": kids['kids'] if kids else None,
+        "waves": waves['waves'] if waves else None,
+        "parking_space": parking_space['parking_space'] if parking_space else None
     })
     
 def beach_add(request):
@@ -321,6 +355,12 @@ def log_beach(request, beach_id):
                     waves = waves,
                     note = note
                 )
+                profile = models.UserProfile.objects.get(user=user)
+                profile.xp += 100
+                profile.save()
+                
+                messages.info(request, '+100 XP точки!')
+                return redirect('map')
             except Exception as e:
                 print(f"Error while submitting Beach Log: {e}")
                 messages.error(request, 'Възникна грешка! Моля опитайте отново!')
@@ -328,3 +368,20 @@ def log_beach(request, beach_id):
     else:
         form = forms.LogBeachForm()
     return render(request, 'app/logs/log_add.html', {'form': form})
+
+def view_logs_spec(request, beach_id):
+    beach = get_object_or_404(models.Beach, pk=beach_id)
+
+    logs = models.BeachLog.objects.filter(beach=beach, date=today_dt)
+
+    return render(request, 'app/logs/logs_today.html', {
+        'beach': beach,
+        'logs': logs
+    })
+    
+def view_my_logs(request, beach_id):
+    user = request.user
+    
+    logs = models.Beach.objects.filter(user = user)
+    
+    return render(request, 'app/logs/my_logs.html', logs)
