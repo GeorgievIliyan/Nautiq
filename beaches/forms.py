@@ -11,8 +11,8 @@ class RegisterForm(forms.Form):
     lng = forms.DecimalField(max_digits=9, decimal_places=6, label="Географска дължина: ", required=False, help_text="Въведете кординатите за центриране на картата.")
     
 class LoginForm(forms.Form):
-    username = forms.CharField(max_length=100, required=True, label="Потребителско име: ", min_length=4)
-    password = forms.CharField(max_length=50, min_length=8, label="Парола")
+    email = forms.CharField(max_length=100, required=True, label="Емайл: ", min_length=1, widget=forms.EmailInput)
+    password = forms.CharField(max_length=50, min_length=8, label="Парола", widget=forms.PasswordInput)
     
 class BeachEditForm(forms.ModelForm):
     class Meta:

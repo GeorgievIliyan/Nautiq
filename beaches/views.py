@@ -7,10 +7,17 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.core.serializers import serialize
+from django.core.mail import send_mail
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.core.mail import send_mail
+from django.urls import reverse
 from django.db.models import Count
 
 # Third-party imports
@@ -42,7 +49,7 @@ def register_view(request):
             lng = form.cleaned_data['lng']
             
             #* Validation & Checks
-            if models.UserProfile.objects.filter(nickname = nickname).exists():
+            if models.UserProfile.objects.filter(nickname=nickname).exists():
                 messages.error(request, "Този прякор е зает! Моля, използвайте друг.")
                 return render(request, 'auth/register.html', {'form': form})
             if has_uppercase(password) != True:
@@ -51,10 +58,10 @@ def register_view(request):
             if has_number(password) != True:
                 messages.error(request, "Паролата трябва да съдържа поне 1 цифра.")
                 return render(request, 'auth/register.html', {'form': form})
-            if User.objects.filter(username = username).exists():
+            if User.objects.filter(username=username).exists():
                 messages.error(request, "Това потребителско име е заето! Моля, използвайте друго.")
                 return render(request, 'auth/register.html', {'form': form})
-            if User.objects.filter(email = email).exists():
+            if User.objects.filter(email=email).exists():
                 messages.error(request, "Този емайл е вече в употреба! Моля, използвайте друг.")
                 return render(request, 'auth/register.html', {'form': form})
             
@@ -62,25 +69,47 @@ def register_view(request):
                 user = User.objects.create_user(
                     username=username,
                     password=password,
-                    email = email
-                    )
+                    email=email
+                )
+                user.is_active = False
+                user.save()
+
                 try:
                     models.UserProfile.objects.create(
-                        user = user,
-                        nickname = nickname,
-                        lat = lat,
-                        lng = lng
+                        user=user,
+                        nickname=nickname,
+                        lat=lat,
+                        lng=lng
                     )
                 except Exception as user_profile_register_error:
                     print(f"Error while trying to register user profile (UserProfile): {user_profile_register_error}")
                     messages.error(request, "Не успяхме да създадем профил! Моля, опитайте отново.")
                     return render(request, 'auth/register.html', {'form': form})
+
+                #* Token building
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                token = default_token_generator.make_token(user)
+                
+                #* Confirmation link
+                confirmation_link = request.build_absolute_uri(
+                    reverse('activate', kwargs={'uidb64': uid, 'token': token})
+                )
+
+                send_mail(
+                    'Потвърдете вашия акаунт',
+                    f'Здравей {username},\n\nМоля, потвърдете акаунта си като натиснете линка:\n{confirmation_link}\n\nБлагодарим!',
+                    'georgiev.iliyan09@gmail.com',
+                    [user.email],
+                    fail_silently=False,
+                )
+
+                messages.success(request, "Регистрацията беше успешна! Моля, проверете имейла си, за да потвърдите акаунта.")
+                return redirect('login')
+
             except Exception as user_register_error:
                 messages.error(request, "Не успяхме да създадем акаунт! Моля, опитайте отново.")
                 print(f"Error while registering user account: {user_register_error}")
                 return render(request, 'auth/register.html', {'form': form})
-            
-            return redirect('login')
     else:
         form = forms.RegisterForm()  
     return render(request, 'auth/register.html', {'form': form})
@@ -88,27 +117,27 @@ def register_view(request):
 def logout_view(request):
     if request.method == "POST":
         logout(request)
-        return redirect()
+        return redirect('login')
     return render(request, 'auth/logout.html')
 
 def login_view(request):
     if request.method == "POST":
         form = forms.LoginForm(request.POST)
         if form.is_valid():
-            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
             password = form.cleaned_data['password']
             
-            if not User.objects.filter(username = username).exists():
-                messages.error(request, 'Неправилно потребителско име или профил с това потребителско име не съществува.')
-                return render(request, 'auth/login.html', {'form':form})
-            
-            user = authenticate(username = username, password = password)
+            try:
+                user = authenticate(request, username=email, password=password)
+            except Exception as user_login_error:
+                print(f"An error occured while a user was trying to log in: {user_login_error}")
             
             if user is None:
                 messages.error(request, 'Възникна грешка! Моля опитайте отново.')
                 return render(request, 'auth/login.html', {'form':form})
             else:
                 login(request, user)
+                send_welcome_email(email)
                 messages.success(request, "Успешно влизане в профила!")
                 return redirect('dashboard')
     else:
@@ -130,6 +159,23 @@ def account_delete(request):
         user_model_reference.delete()
         return redirect('register')
     return render(request, 'auth/account_delete.html')
+
+#* Activation View:
+def activate(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+        messages.success(request, "Вашият акаунт беше потвърден! Вече можете да влезете.")
+        return redirect('login')
+    else:
+        messages.error(request, "Невалиден или изтекъл линк за потвърждение.")
+        return redirect('register')
 
 #* ===== APP ===== *#
 def dashboard(request):
@@ -157,31 +203,12 @@ def map_view(request):
 def beach_data(request, beach_id):
     beach = models.Beach.objects.get(id=beach_id)
 
-    logs = models.BeachLog.objects.filter(beach=beach, date__date=today_dt).count()
+    today_logs = models.BeachLog.objects.filter(beach=beach, date__date=today_dt)
+    logs_count = today_logs.count()
 
-    crowd_level = models.BeachLog.objects.filter(beach__id=beach_id).values('crowd_level')\
-        .annotate(count=Count('crowd_level')).order_by('-count').first()
-    water_clarity = models.BeachLog.objects.filter(beach__id=beach_id).values('water_clarity')\
-        .annotate(count=Count('water_clarity')).order_by('-count').first()
-    water_temp = models.BeachLog.objects.filter(beach__id=beach_id).values('water_temp')\
-        .annotate(count=Count('water_temp')).order_by('-count').first()
-    weather = models.BeachLog.objects.filter(beach__id=beach_id).values('weather')\
-        .annotate(count=Count('weather')).order_by('-count').first()
-    algae = models.BeachLog.objects.filter(beach__id=beach_id).values('algae')\
-        .annotate(count=Count('algae')).order_by('-count').first()
-    kids = models.BeachLog.objects.filter(beach__id=beach_id).values('kids')\
-        .annotate(count=Count('kids')).order_by('-count').first()
-    waves = models.BeachLog.objects.filter(beach__id=beach_id).values('waves')\
-        .annotate(count=Count('waves')).order_by('-count').first()
-    parking_space = models.BeachLog.objects.filter(beach__id=beach_id).values('parking_space')\
-        .annotate(count=Count('parking_space')).order_by('-count').first()
-
-    log = models.BeachLog.objects.filter(beach=beach, date=today_dt).first()
-    log_id = str(log.pk) if log else None
-
-    return JsonResponse({
+    response = {
         "pk": str(beach.pk),
-        "log_id": log_id,
+        "log_id": str(today_logs.first().pk) if logs_count else None,
         "name": beach.name,
         "description": beach.description,
         "has_lifeguard": beach.has_lifeguard,
@@ -191,16 +218,38 @@ def beach_data(request, beach_id):
         "has_beach_bar": beach.has_beach_bar,
         "has_toilets": beach.has_toilets,
         "has_changing_rooms": beach.has_changing_rooms,
-        "times_logged": logs,
-        "clarity_avr": water_clarity['water_clarity'] if water_clarity else None,
-        "crowd_avr": crowd_level['crowd_level'] if crowd_level else None,
-        "water_temp_avr": water_temp['water_temp'] if water_temp else None,
-        "weather_avr": weather['weather'] if weather else None,
-        "algae_avr": algae['algae'] if algae else None,
-        "kids_avr": kids['kids'] if kids else None,
-        "waves": waves['waves'] if waves else None,
-        "parking_space": parking_space['parking_space'] if parking_space else None
-    })
+        "times_logged": logs_count,
+        "clarity_avr": None,
+        "crowd_avr": None,
+        "water_temp_avr": None,
+        "weather_avr": None,
+        "algae_avr": None,
+        "kids_avr": None,
+        "waves": None,
+        "parking_space": None,
+    }
+
+    if logs_count:
+        fields = [
+            "crowd_level", "water_clarity", "water_temp", "weather",
+            "algae", "kids", "waves", "parking_space"
+        ]
+        for field in fields:
+            value = (
+                models.BeachLog.objects.filter(beach=beach)
+                .values(field).annotate(count=Count(field))
+                .order_by("-count").first()
+            )
+            response[field if field != "water_clarity" else "clarity_avr"] = (
+                value[field] if value else None
+            ) if field not in ["crowd_level", "water_temp", "weather",
+                                "algae", "kids", "waves", "parking_space"] else (
+                value[field] if value else None
+            )
+
+
+    return JsonResponse(response)
+
     
 def beach_add(request):
     lat = request.GET.get('lat')
@@ -385,3 +434,11 @@ def view_my_logs(request, beach_id):
     logs = models.Beach.objects.filter(user = user)
     
     return render(request, 'app/logs/my_logs.html', logs)
+
+def send_welcome_email(recipient_email):
+    subject = 'Welcome!'
+    message = 'Thank you for signing up. We\'re glad to have you!'
+    from_email = 'georgiev.iliyan09@gmail.com'
+    recipient_list = [recipient_email]
+
+    send_mail(subject, message, from_email, recipient_list)

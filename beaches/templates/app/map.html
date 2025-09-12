@@ -49,7 +49,6 @@
     {{ beaches|json_script:"beaches_json"}}
 
     <script>
-
         const lat = parseFloat(document.getElementById('user_lat').textContent);
         const lng = parseFloat(document.getElementById('user_lng').textContent);
 
@@ -63,6 +62,8 @@
 
             let beaches = JSON.parse(document.getElementById('beaches_json').textContent);
             let userMarker = null;
+
+            const displayValue = val => val === null ? "Няма информация" : val;
 
             map.on('click', (e) => {
                 if (userMarker) map.removeLayer(userMarker);
@@ -86,44 +87,44 @@
                             return response.json();
                         })
                         .then(data => {
-                            this.bindPopup(`<b>${data.name}</b>`).openPopup();
+                            this.bindPopup(`<b>${displayValue(data.name)}</b>`).openPopup();
 
                             const sidebar = document.getElementById("sidebar");
                             if (!sidebar) return;
 
                             sidebar.innerHTML = `
-                                <h2>${data.name}</h2>
-                                <p>${data.description}</p>
-                                <p>Доклади днес: ${data.times_logged}</p>
-                                <p>Платена зона: ${data.has_paid_zone}</p>
-                                <p>Паркинг: ${data.has_parking}</p>
-                                <p>Платен паркинг: ${data.has_paid_parking}</p>
-                                <p>Заведения: ${data.has_beach_bar}</p>
-                                <p>Съблекални: ${data.has_changing_rooms}</p>
-                                <p>Тоалетни: ${data.has_toilets}</p>
+                                <h2>${displayValue(data.name)}</h2>
+                                <p>${displayValue(data.description)}</p>
+                                <p>Доклади днес: ${displayValue(data.times_logged)}</p>
+                                <p>Платена зона: ${displayValue(data.has_paid_zone)}</p>
+                                <p>Паркинг: ${displayValue(data.has_parking)}</p>
+                                <p>Платен паркинг: ${displayValue(data.has_paid_parking)}</p>
+                                <p>Заведения: ${displayValue(data.has_beach_bar)}</p>
+                                <p>Съблекални: ${displayValue(data.has_changing_rooms)}</p>
+                                <p>Тоалетни: ${displayValue(data.has_toilets)}</p>
 
-                                <a id="log-link" class="btn btn-primary" data-url-base="{% url 'log_beach' '00000000-0000-0000-0000-000000000000' %}">Докладвайте данни за този плаж</a>
                                 <a id="report-link" class="btn btn-danger mt-3" data-url-base="{% url 'report_beach' '00000000-0000-0000-0000-000000000000' %}">Докладвайте проблем с този плаж</a>
-                                <a id="spec-log-link"
-                                class="btn btn-success mt-3"
-                                href="#"
-                                data-url-base="{% url 'log_beach_spec' '00000000-0000-0000-0000-000000000000' %}">
-                                    Доклади за днес
-                                </a>
-
 
                                 <h3 class="mt-5">Условията днес: </h3>
-                                <p>Честота на водата: ${data.clarity_avr}</p>
-                                <p>Количество хора: ${data.crowd_avr}</p>
-                                <p>Време: ${data.weather_avr}</p>
-                                <p>Усещане на водата: ${data.water_temp_avr}</p>
-                                <p>Водорасли: ${data.algae_avr}</p>
-                                <p>Количество деца: ${data.kids_avr}</p>
-                                <p>Вълни: ${data.waves}</p>
-                                <p>Място за паркиране: ${data.parking_space}</p>
+                                <p>Честота на водата: ${displayValue(data.clarity_avr)}</p>
+                                <p>Количество хора: ${displayValue(data.crowd_avr)}</p>
+                                <p>Време: ${displayValue(data.weather_avr)}</p>
+                                <p>Усещане на водата: ${displayValue(data.water_temp_avr)}</p>
+                                <p>Водорасли: ${displayValue(data.algae_avr)}</p>
+                                <p>Количество деца: ${displayValue(data.kids_avr)}</p>
+                                <p>Вълни: ${displayValue(data.waves)}</p>
+                                <p>Място за паркиране: ${displayValue(data.parking_space)}</p>
+
+                                <a id="log-link" class="btn btn-primary" data-url-base="{% url 'log_beach' '00000000-0000-0000-0000-000000000000' %}">Докладвайте данни за този плаж</a>
+                                <a id="spec-log-link"
+                                    class="btn btn-success mt-3"
+                                    href="#"
+                                    data-url-base="{% url 'log_beach_spec' '00000000-0000-0000-0000-000000000000' %}">
+                                        Доклади за днес
+                                </a>
                             `;
 
-                            // Update all three buttons
+                            // Update all three buttons with proper PK
                             const logLink = document.getElementById('log-link');
                             if (logLink) logLink.href = logLink.dataset.urlBase.replace('00000000-0000-0000-0000-000000000000', data.pk);
 
@@ -137,7 +138,6 @@
                                     data.pk
                                 );
                             }
-
                         })
                         .catch(error => {
                             console.error('Fetch error:', error);
@@ -147,6 +147,7 @@
             });
         }
     </script>
+
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>

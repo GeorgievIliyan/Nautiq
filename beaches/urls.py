@@ -7,6 +7,8 @@ urlpatterns = [
     path('auth/login/', views.login_view, name='login'),
     path('auth/logout/confirm', views.logout_view, name='logout'),
     path('account/', views.account_view, name='account'),
+    #* EMAIL RELATED
+    path('activate/<uidb64>/<token>/', views.activate, name='activate'),
     #* APP URLS
     path('dashboard/', views.dashboard, name='dashboard'),
     path('map/', views.map_view, name='map'),
