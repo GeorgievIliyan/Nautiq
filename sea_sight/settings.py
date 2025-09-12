@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-whg)_o+fq+0td_7+gb5kv8u^d_d%@-le7r#4_09jr6di25n_4u'
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -148,18 +148,17 @@ REGISTER_URL = 'register'
 
 load_dotenv()
 
-if os.getenv("ENVIRONMENT") == 'production':
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.gmail.com'
+if os.getenv("ENVIRONMENT") == "production":
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = "smtp.gmail.com"
     EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
     EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
-    DEFAULT_FROM_EMAIL = "SeaSight"
-    ACCOUNT_EMAIL_SUBJECT_PREFIX = ''
-    
+    DEFAULT_FROM_EMAIL = f"SeaSight <{EMAIL_HOST_USER}>"
+    ACCOUNT_EMAIL_SUBJECT_PREFIX = ""
 else:
-    EMAIL_BACKEND = 'django.core.mail.backend.console.EmailBackend'
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True

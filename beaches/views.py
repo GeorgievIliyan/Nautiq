@@ -3,8 +3,8 @@ from datetime import date
 
 # Django imports
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib.auth.models import User
 from django.core.serializers import serialize
 from django.core.mail import send_mail
@@ -19,6 +19,7 @@ from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 from django.urls import reverse
 from django.db.models import Count
+from django.conf import settings
 
 # Third-party imports
 from validators.numbers_validator import is_valid_number as has_number
@@ -33,6 +34,8 @@ aware_datetime = timezone.now()
 
 def is_moderator(user):
     return user.is_staff
+
+#* ===== MAILS ===== *#
 
 #* ===== USER AUTHENTICATION ===== *#
 
@@ -96,8 +99,8 @@ def register_view(request):
                 )
 
                 send_mail(
-                    'Потвърдете вашия акаунт',
-                    f'Здравей {username},\n\nМоля, потвърдете акаунта си като натиснете линка:\n{confirmation_link}\n\nБлагодарим!',
+                    'Потвърдете вашия акаунт в SeaSight',
+                    f'Здравей {username},\n\nМоля, потвърдете акаунта си като натиснете линка:\n{confirmation_link}\n\nБлагодарим! \nПоздрави: Екипа на SeaSight',
                     'georgiev.iliyan09@gmail.com',
                     [user.email],
                     fail_silently=False,
@@ -137,7 +140,6 @@ def login_view(request):
                 return render(request, 'auth/login.html', {'form':form})
             else:
                 login(request, user)
-                send_welcome_email(email)
                 messages.success(request, "Успешно влизане в профила!")
                 return redirect('dashboard')
     else:
@@ -145,10 +147,10 @@ def login_view(request):
     return render(request, 'auth/login.html', {'form': form})
 
 def account_view(request):
-    user = request.user
+    app_user = request.user
     context = {
-        "user": user,
-        "profile": models.UserProfile.objects.filter(user = user)
+        "user": app_user,
+        "profile": models.UserProfile.objects.filter(user = app_user)
     }
     return render(request, 'auth/account.html', context)
 
@@ -159,6 +161,96 @@ def account_delete(request):
         user_model_reference.delete()
         return redirect('register')
     return render(request, 'auth/account_delete.html')
+
+def enter_mail(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            user = None
+
+        if user:
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+
+            reset_link = request.build_absolute_uri(
+                reverse("set_new_password_from_mail", kwargs={"uidb64": uid, "token": token})
+            )
+
+            send_mail(
+                "Възстановяване на парола - SeaSight",
+                f"Здравей {user.username},\n\nМожете да промените паролата си през този линк:\n{reset_link}\n\nПоздрави,\nЕкипа на SeaSight",
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+            messages.success(request, "Изпратихме ви имейл с линк за смяна на парола.")
+            return redirect("login")
+        else:
+            messages.error(request, "Няма потребител с този имейл.")
+
+    return render(request, "auth/enter_mail.html")
+
+
+def set_new_password_from_mail(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user and default_token_generator.check_token(user, token):
+        if request.method == "POST":
+            form = forms.SetPasswordForm(request.POST)
+            if form.is_valid():
+                new_password = form.cleaned_data['new_password']
+                user.set_password(new_password)
+                user.save()
+                messages.success(request, "Вашата парола беше променена успешно!")
+                return redirect("login")
+            else:
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, error)
+                return render(
+                    request,
+                    "auth/set_new_password.html",
+                    {"form": form, "uidb64": uidb64, "token": token},
+                )
+        else:
+            form = forms.SetPasswordForm()
+
+        return render(
+            request,
+            "auth/set_new_password.html",
+            {"form": form, "uidb64": uidb64, "token": token},
+        )
+    else:
+        messages.error(request, "Невалиден или изтекъл линк!")
+        return redirect("enter_mail")
+
+
+@login_required
+def reset_password(request):
+    user = request.user
+
+    if request.method == "POST":
+        old_password = request.POST.get("old_password")
+        new_password = request.POST.get("new_password")
+
+        if not user.check_password(old_password):
+            messages.error(request, "Невалидна стара парола!")
+        elif old_password == new_password:
+            messages.error(request, "Новата парола не може да съвпада със старата!")
+        else:
+            user.set_password(new_password)
+            user.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, "Паролата Ви беше успешно променена!")
+            return redirect("account")
+
+    return render(request, "auth/reset_password.html")
 
 #* Activation View:
 def activate(request, uidb64, token):
@@ -177,7 +269,7 @@ def activate(request, uidb64, token):
         messages.error(request, "Невалиден или изтекъл линк за потвърждение.")
         return redirect('register')
 
-#* ===== APP ===== *#
+#* ================= APP ================= *#
 def dashboard(request):
     return render(request, 'app/dashboard.html')
 
@@ -434,11 +526,3 @@ def view_my_logs(request, beach_id):
     logs = models.Beach.objects.filter(user = user)
     
     return render(request, 'app/logs/my_logs.html', logs)
-
-def send_welcome_email(recipient_email):
-    subject = 'Welcome!'
-    message = 'Thank you for signing up. We\'re glad to have you!'
-    from_email = 'georgiev.iliyan09@gmail.com'
-    recipient_list = [recipient_email]
-
-    send_mail(subject, message, from_email, recipient_list)
