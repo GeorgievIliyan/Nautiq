@@ -425,7 +425,7 @@ def report_beach(request, beach_id):
             category = form.cleaned_data['category']
             
             try:
-                models.BeachReport.objects.create(
+                new_report = models.BeachReport.objects.create(
                     beach = beach,
                     submitted_by = user,
                     title = title,
@@ -433,6 +433,14 @@ def report_beach(request, beach_id):
                     category = category
                 )
                 messages.success(request, 'Успешно подадено докладване!')
+                
+                subject = "Успешно подаден сигнал"
+                message = f"Здравейте, {user.username}, \n\nБлагодарим, че подадохте сигнал за този плаж. Модерацията ще прегледа този сигнал възможно най-бързо.\nID на сигнала: {new_report.id}. \n\nПоздрави:\nEкипът на SeaSight"
+                from_email = 'iliyan.georgiev09@gmail.com'
+                recipent_list = [user.email]
+                
+                send_mail(subject, message, from_email, recipent_list)
+                
                 return redirect('map')
             except Exception as e:
                 print(f"Error while trying to submit report: {e}")

@@ -12,12 +12,12 @@ class RegisterForm(forms.Form):
     
 class LoginForm(forms.Form):
     email = forms.CharField(max_length=100, required=True, label="Емайл: ", min_length=1, widget=forms.EmailInput)
-    password = forms.CharField(max_length=50, min_length=8, label="Парола", widget=forms.PasswordInput)
+    password = forms.CharField(max_length=50, min_length=8, label="Парола: ", widget=forms.PasswordInput)
     
 class ChangePasswordForm(forms.Form):
     old_password = forms.CharField(max_length=100, label="Стара парола: ", widget=forms.PasswordInput)
-    new_password = forms.CharField(max_length=100, min_length=8, label="Нова парола", widget=forms.PasswordInput)
-    confirm_password = forms.CharField(max_length=100, label="Повтори новата парола", widget=forms.PasswordInput)
+    new_password = forms.CharField(max_length=100, min_length=8, label="Нова парола: ", widget=forms.PasswordInput)
+    confirm_password = forms.CharField(max_length=100, label="Повтори новата парола: ", widget=forms.PasswordInput)
 
     def clean(self):
         cleaned_data = super().clean()

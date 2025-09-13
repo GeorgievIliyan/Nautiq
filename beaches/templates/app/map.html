@@ -87,6 +87,7 @@
                             return response.json();
                         })
                         .then(data => {
+                            console.log(data)
                             this.bindPopup(`<b>${displayValue(data.name)}</b>`).openPopup();
 
                             const sidebar = document.getElementById("sidebar");
@@ -123,13 +124,16 @@
                                         Доклади за днес
                                 </a>
                             `;
-
-                            // Update all three buttons with proper PK
+                            
                             const logLink = document.getElementById('log-link');
-                            if (logLink) logLink.href = logLink.dataset.urlBase.replace('00000000-0000-0000-0000-000000000000', data.pk);
+                            if (logLink) {
+                                logLink.href = logLink.dataset.urlBase.replace('00000000-0000-0000-0000-000000000000', data.pk);
+                            }
 
                             const reportLink = document.getElementById('report-link');
-                            if (reportLink) reportLink.href = reportLink.dataset.urlBase.replace('00000000-0000-0000-0000-000000000000', data.pk);
+                            if (reportLink) {
+                                reportLink.href = reportLink.dataset.urlBase.replace('00000000-0000-0000-0000-000000000000', data.pk);
+                            }
 
                             const specLogLink = document.getElementById('spec-log-link');
                             if (specLogLink) {
@@ -147,6 +151,7 @@
             });
         }
     </script>
+
 
 
 

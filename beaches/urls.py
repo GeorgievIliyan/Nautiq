@@ -20,7 +20,7 @@ urlpatterns = [
     #* MODERATION:
     path('moderation/dashboard/', views.dashboard_mod, name='dashborad_mod'),
     #* REPORTING:
-    path("report-beach/<uuid:report_id>/", views.report_beach, name="report_beach"),
+    path("report-beach/<uuid:beach_id>/", views.report_beach, name="report_beach"),
     path('report-beach/mark-as-resolved/<uuid:report_id>/', views.report_mark_as_resolved, name="report_resolve"),
     path('report-beach/delete/<uuid:report_id>/', views.report_delete, name='report_delete'),
     #* LOGGING & LOGS:
