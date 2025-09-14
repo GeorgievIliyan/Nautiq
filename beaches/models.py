@@ -1,8 +1,12 @@
 from django.db import models
 import uuid
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 #* ===== USER PROFILE & AUTH MODELS ===== *#
+class User(AbstractUser):
+    is_first_login = models.BooleanField(default=True)
+
 class UserProfile(models.Model):
     
     id = models.UUIDField(
@@ -12,7 +16,7 @@ class UserProfile(models.Model):
     )
     
     nickname = models.CharField(max_length=50, null=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     
     lat = models.CharField(null=True, blank=True, default=48.8566)
     lng = models.CharField(null=True, blank=True, default=2.3522)
@@ -21,7 +25,7 @@ class UserProfile(models.Model):
     
     def __str__(self):
         return self.user.username
-    
+
 #* ===== APP MODELS ===== *#
 class Beach(models.Model):
     has_been_approved = models.BooleanField(default=False)
@@ -55,16 +59,17 @@ class Beach(models.Model):
     
     def __str__(self):
         return (F"{self.name}: {self.latitude},{self.longitude}")
-    
+
 class BeachImage(models.Model):
     title = models.CharField(max_length=100, null=True, blank=True)
     beach = models.ForeignKey(Beach, on_delete=models.CASCADE, blank=True, null=True)
     image = models.ImageField(null=False, blank=False, upload_to='static/beach_images/')
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # already correct
     date = models.DateTimeField(auto_now_add=True)
+    
     def __str__(self):
         return (f"Image \"{self.title}\" created on {self.date} by {self.user.username}.")
-    
+
 class BeachLog(models.Model):
     
     id = models.UUIDField(
@@ -74,9 +79,9 @@ class BeachLog(models.Model):
     )
     
     WAVE_CHOICES = (
-    ('Големи', 'high'),
-    ('Средни', 'medium'),
-    ('Малки', 'small'),
+        ('Големи', 'high'),
+        ('Средни', 'medium'),
+        ('Малки', 'small'),
     )
     PARKING_SPACE_CHOICES = (
         ('Много', 'high'),
@@ -107,12 +112,12 @@ class BeachLog(models.Model):
         ('Горещо', 'hot'),
         ('Топло', 'warm'),
         ('Нормално', 'normal'),
-        ('Хладно', 'cool'),
+        ('Хладко', 'cool'),
         ('Студено', 'cold'),
     )
     CROWD_LEVEL_CHOICES = (
         ('Високо', 'high'),
-        ('Средно', 'meduim'),
+        ('Средно', 'medium'),
         ('Ниско', 'low'),
     )
     WATER_CLARITY_CHOICES = (
@@ -121,17 +126,15 @@ class BeachLog(models.Model):
         ('Ясна', 'clear'),
     )
     
-    
     beach = models.ForeignKey(Beach, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # already correct
     date = models.DateTimeField(auto_now_add=True)
     image = models.ForeignKey(BeachImage, on_delete=models.SET_NULL, blank=True, null=True)
     
-    # conditions
     crowd_level = models.CharField(
         max_length=20,
         choices=CROWD_LEVEL_CHOICES,
-        default='meduim',
+        default='medium',
         blank=True
     )
     
@@ -192,7 +195,6 @@ class BeachLog(models.Model):
     class Meta:
         ordering = ['-date']
 
-        
 class BeachReport(models.Model):
     REPORT_CATEGORIES = (
         ('inc_loc', 'Неправилно местоположение'),
@@ -202,7 +204,7 @@ class BeachReport(models.Model):
     )
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     beach = models.ForeignKey(Beach, on_delete=models.CASCADE)
-    submitted_by = models.ForeignKey(User,on_delete=models.CASCADE)
+    submitted_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)  # already correct
     date = models.DateTimeField(auto_now_add=True)
     title = models.CharField(max_length=50)
     description = models.CharField(max_length=500)
@@ -211,10 +213,11 @@ class BeachReport(models.Model):
     
     def __str__(self):
         return (f"Report \"{self.title}\", made by {self.submitted_by.username} on {self.date}.")
-    
+
 class Badge(models.Model):
     title = models.CharField(max_length=50)
     image = models.ImageField()
     desc = models.TextField()
+    
     def __str__(self):
         return self.title

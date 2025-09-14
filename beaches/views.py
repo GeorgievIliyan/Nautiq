@@ -6,11 +6,9 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib.auth.models import User
-from django.core.serializers import serialize
 from django.core.mail import send_mail
-from django.http import Http404, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
@@ -55,10 +53,10 @@ def register_view(request):
             if models.UserProfile.objects.filter(nickname=nickname).exists():
                 messages.error(request, "Този прякор е зает! Моля, използвайте друг.")
                 return render(request, 'auth/register.html', {'form': form})
-            if has_uppercase(password) != True:
+            if not has_uppercase(password):
                 messages.error(request, "Паролата трябва да съдържа поне 1 главна буква.")
                 return render(request, 'auth/register.html', {'form': form})
-            if has_number(password) != True:
+            if not has_number(password):
                 messages.error(request, "Паролата трябва да съдържа поне 1 цифра.")
                 return render(request, 'auth/register.html', {'form': form})
             if User.objects.filter(username=username).exists():
@@ -76,18 +74,6 @@ def register_view(request):
                 )
                 user.is_active = False
                 user.save()
-
-                try:
-                    models.UserProfile.objects.create(
-                        user=user,
-                        nickname=nickname,
-                        lat=lat,
-                        lng=lng
-                    )
-                except Exception as user_profile_register_error:
-                    print(f"Error while trying to register user profile (UserProfile): {user_profile_register_error}")
-                    messages.error(request, "Не успяхме да създадем профил! Моля, опитайте отново.")
-                    return render(request, 'auth/register.html', {'form': form})
 
                 #* Token building
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -117,6 +103,36 @@ def register_view(request):
         form = forms.RegisterForm()  
     return render(request, 'auth/register.html', {'form': form})
 
+@login_required
+def enter_details(request):
+    user = request.user
+    if request.method == "POST":
+        form = forms.UserPreferencesForm(request.POST)
+        
+        if form.is_valid():
+            nickname = form.cleaned_data['nickname']
+            lat = form.cleaned_data['lat']
+            lng = form.cleaned_data['lng']
+            
+            try:
+                models.UserProfile.objects.create(
+                    user = user,
+                    nickname = nickname,
+                    lat = lat, 
+                    lng = lng
+                )
+            except Exception as user_profile_creation_error:
+                messages.error(request, "Не успяхме да създадем акаунт! Моля, опитайте отново.")
+                print(f"Error while trying to create user profile: {user_profile_creation_error}")
+                
+                messages.success(request, "Успешна конфигурация!")
+                return redirect('dashboard')
+    
+    else:
+        form = forms.UserPreferencesForm()
+    return render(request, 'auth/enter_details.html', {'form': form})
+
+@login_required
 def logout_view(request):
     if request.method == "POST":
         logout(request)
@@ -133,11 +149,16 @@ def login_view(request):
             try:
                 user = authenticate(request, username=email, password=password)
             except Exception as user_login_error:
-                print(f"An error occured while a user was trying to log in: {user_login_error}")
-            
+                print(f"An error occurred while a user was trying to log in: {user_login_error}")
+                messages.error(request, 'An error occurred. Please try again.')
+                return render(request, 'auth/login.html', {'form': form})
+
             if user is None:
                 messages.error(request, 'Възникна грешка! Моля опитайте отново.')
-                return render(request, 'auth/login.html', {'form':form})
+                return render(request, 'auth/login.html', {'form': form})
+            elif not user.is_active:
+                messages.error(request, f'Моля потвърдете своя профил на {email}, преди да продължите!')
+                return render(request, 'auth/login.html', {'form': form})
             else:
                 login(request, user)
                 messages.success(request, "Успешно влизане в профила!")
@@ -146,6 +167,7 @@ def login_view(request):
         form = forms.LoginForm()
     return render(request, 'auth/login.html', {'form': form})
 
+@login_required
 def account_view(request):
     app_user = request.user
     context = {
@@ -154,6 +176,7 @@ def account_view(request):
     }
     return render(request, 'auth/account.html', context)
 
+@login_required
 def account_delete(request):
     user = request.user
     if request.method == "POST":
@@ -270,9 +293,15 @@ def activate(request, uidb64, token):
         return redirect('register')
 
 #* ================= APP ================= *#
+@login_required
 def dashboard(request):
+    user = request.user
+    
+    if user.is_first_login:
+        return redirect('enter_details')
     return render(request, 'app/dashboard.html')
 
+@login_required
 def map_view(request):
     user = request.user
     try:
@@ -396,6 +425,7 @@ def beach_add(request):
 
 #* ===== MODERATION ===== *#
 @user_passes_test(is_moderator)
+@login_required
 def dashboard_mod(request):
     pending_beaches = models.Beach.objects.filter(has_been_approved=False)
     reports = models.BeachReport.objects.filter(resolved = False)
@@ -406,6 +436,7 @@ def dashboard_mod(request):
     return render(request, 'app/moderator/dashboard_mod.html', context)
 
 @user_passes_test(is_moderator)
+@login_required
 def mark_as_approved(request, beach_id):
     beach = get_object_or_404(models.Beach, id = beach_id)
     beach.has_been_approved = True
@@ -413,6 +444,7 @@ def mark_as_approved(request, beach_id):
     beach.save()
     
 #* ====== BEACH REPORTING ===== *#
+@login_required
 def report_beach(request, beach_id):
     beach = get_object_or_404(models.Beach, id = beach_id)
     user = request.user
@@ -451,6 +483,8 @@ def report_beach(request, beach_id):
     
     return render(request, 'app/reports/report_add.html', {'form':form})
 
+@login_required
+@user_passes_test(is_moderator)
 def report_mark_as_resolved(request, report_id):
     beach = get_object_or_404(models.BeachReport, id = report_id)
     beach.resolved = True
@@ -464,6 +498,7 @@ def report_delete(request, report_id):
 
 #* ====== BEACH LOGGING ===== *#
 
+@login_required
 def log_beach(request, beach_id):
     if request.method == "POST":
         form = forms.LogBeachForm(request.POST, request.FILES)
@@ -518,6 +553,7 @@ def log_beach(request, beach_id):
         form = forms.LogBeachForm()
     return render(request, 'app/logs/log_add.html', {'form': form})
 
+@login_required
 def view_logs_spec(request, beach_id):
     beach = get_object_or_404(models.Beach, pk=beach_id)
 
@@ -527,7 +563,8 @@ def view_logs_spec(request, beach_id):
         'beach': beach,
         'logs': logs
     })
-    
+
+@login_required
 def view_my_logs(request, beach_id):
     user = request.user
     
