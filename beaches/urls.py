@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path(' ', views.redirect_view, name='redirect'),
     #* AUTHENTICATION URLS:
     path('auth/register/', views.register_view, name='register'),
     path('auth/login/', views.login_view, name='login'),
@@ -26,6 +27,7 @@ urlpatterns = [
     #* LOGGING & LOGS:
     path('log-beach/<uuid:beach_id>/', views.log_beach, name='log_beach'),
     path('logs/today/<uuid:beach_id>/', views.view_logs_spec, name='log_beach_spec'),
+    path('logs/my-logs/all/', views.view_my_logs, name='my_logs'),
     #* MISC:
-    path('account/setup/', views.enter_details, name='enter_details')
+    path('account/setup/', views.enter_details, name='enter_details'),
 ]

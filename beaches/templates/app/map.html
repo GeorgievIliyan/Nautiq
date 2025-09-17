@@ -97,7 +97,9 @@
                     <b>Маркер</b><br>
                     Latitude: ${e.latlng.lat.toFixed(5)}<br>
                     Longitude: ${e.latlng.lng.toFixed(5)}<br>
-                    <a href={% url 'beach_add' %}>Добавете това място като плаж</a>
+                    <a href="{% url 'beach_add' %}?lat=${e.latlng.lat}&lng=${e.latlng.lng}">
+                        Добавете това място като плаж
+                    </a>
                 `).openPopup();
             });
 

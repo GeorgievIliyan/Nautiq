@@ -3,9 +3,8 @@ from datetime import date
 
 # Django imports
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash, get_user_model
 from django.contrib.auth.decorators import user_passes_test, login_required
-from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -33,6 +32,16 @@ aware_datetime = timezone.now()
 def is_moderator(user):
     return user.is_staff
 
+def is_first_login(user):
+    if user.is_first_login== True:
+        return True
+    else: False
+    
+def redirect_view(request):
+    return redirect('dashboard')
+
+User = get_user_model()
+
 #* ===== MAILS ===== *#
 
 #* ===== USER AUTHENTICATION ===== *#
@@ -43,16 +52,10 @@ def register_view(request):
         
         if form.is_valid():
             username = form.cleaned_data['username']
-            nickname = form.cleaned_data['nickname']
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
-            lat = form.cleaned_data['lat']
-            lng = form.cleaned_data['lng']
             
             #* Validation & Checks
-            if models.UserProfile.objects.filter(nickname=nickname).exists():
-                messages.error(request, "Този прякор е зает! Моля, използвайте друг.")
-                return render(request, 'auth/register.html', {'form': form})
             if not has_uppercase(password):
                 messages.error(request, "Паролата трябва да съдържа поне 1 главна буква.")
                 return render(request, 'auth/register.html', {'form': form})
@@ -104,32 +107,40 @@ def register_view(request):
     return render(request, 'auth/register.html', {'form': form})
 
 @login_required
+@user_passes_test(is_first_login)
 def enter_details(request):
     user = request.user
     if request.method == "POST":
         form = forms.UserPreferencesForm(request.POST)
-        
+
         if form.is_valid():
             nickname = form.cleaned_data['nickname']
             lat = form.cleaned_data['lat']
             lng = form.cleaned_data['lng']
-            
+
+            if models.UserProfile.objects.filter(nickname=nickname).exists():
+                messages.error(request, "Този прякор е зает! Моля, използвайте друг.")
+                return render(request, 'auth/register.html', {'form': form})
+
             try:
                 models.UserProfile.objects.create(
-                    user = user,
-                    nickname = nickname,
-                    lat = lat, 
-                    lng = lng
+                    user=user,
+                    nickname=nickname,
+                    lat=lat,
+                    lng=lng
                 )
-            except Exception as user_profile_creation_error:
-                messages.error(request, "Не успяхме да създадем акаунт! Моля, опитайте отново.")
-                print(f"Error while trying to create user profile: {user_profile_creation_error}")
-                
-                messages.success(request, "Успешна конфигурация!")
-                return redirect('dashboard')
-    
+
+                user.is_first_login = False
+                user.save()
+
+                return redirect("dashboard")
+
+            except Exception as e:
+                messages.error(request, f"Възникна грешка: {str(e)}")
+                return render(request, 'auth/register.html', {'form': form})
     else:
         form = forms.UserPreferencesForm()
+
     return render(request, 'auth/enter_details.html', {'form': form})
 
 @login_required
@@ -304,11 +315,12 @@ def dashboard(request):
 @login_required
 def map_view(request):
     user = request.user
-    try:
-        user_profile = models.UserProfile.objects.get(user=user)
+    user_profile = models.UserProfile.objects.filter(user=user).first()
+
+    if user_profile:
         user_lat = user_profile.lat
         user_lng = user_profile.lng
-    except models.UserProfile.DoesNotExist:
+    else:
         user_lat = 48.8566
         user_lng = 2.3522
 
@@ -317,7 +329,7 @@ def map_view(request):
     context = {
         "beaches": list(beaches.values("id", "latitude", "longitude")),
         "user_lat": user_lat,
-        "user_lng": user_lng
+        "user_lng": user_lng,
     }
     return render(request, "app/map.html", context)
 
@@ -371,56 +383,39 @@ def beach_data(request, beach_id):
 
     return JsonResponse(response)
 
-    
+@login_required
 def beach_add(request):
-    lat = request.GET.get('lat')
-    lng = request.GET.get('lng')
+    lat = request.GET.get("lat")
+    lng = request.GET.get("lng")
 
     if request.method == "POST":
         form = forms.BeachAddForm(request.POST, request.FILES)
-
         if form.is_valid():
-            image = form.cleaned_data['image']
-            name = form.cleaned_data['name']
-            description = form.cleaned_data['description']
-            has_lifeguard = form.cleaned_data['has_lifeguard']
-            has_parking = form.cleaned_data['has_parking']
-            has_paid_parking = form.cleaned_data['has_paid_parking']
-            has_toilets = form.cleaned_data['has_toilets']
-            has_changing_rooms = form.cleaned_data['has_changing_rooms']
-            has_paid_zone = form.cleaned_data['has_paid_zone']
-            has_beach_bar = form.cleaned_data['has_beach_bar']
-
-            try:
-                models.Beach.objects.create(
-                    name=name,
-                    description=description,
-                    has_lifeguard=has_lifeguard,
-                    has_parking=has_parking,
-                    has_paid_parking=has_paid_parking,
-                    has_toilets=has_toilets,
-                    has_changing_rooms=has_changing_rooms,
-                    has_paid_zone=has_paid_zone,
-                    has_beach_bar=has_beach_bar,
-                    latitude=request.POST.get('latitude'),
-                    longitude=request.POST.get('longitude')
-                )
-                messages.success(
-                    request,
-                    'Добавите плаж успешно. Изчаква одобрение от администратор.'
-                )
-                return redirect('map')
-            except Exception as e:
-                print(f"Error while trying to add a beach: {e}")
-                messages.error(
-                    request,
-                    'Нещо се обърка! Не успяхме да добавим този плаж към картата. Моля, опитайте отново'
-                )
-                return render(request, 'app/beaches/beach_add.html', {'form': form})
+            models.Beach.objects.create(
+                name=form.cleaned_data['name'],
+                description=form.cleaned_data['description'],
+                has_lifeguard=form.cleaned_data['has_lifeguard'],
+                has_parking=form.cleaned_data['has_parking'],
+                has_paid_parking=form.cleaned_data['has_paid_parking'],
+                has_toilets=form.cleaned_data['has_toilets'],
+                has_changing_rooms=form.cleaned_data['has_changing_rooms'],
+                has_paid_zone=form.cleaned_data['has_paid_zone'],
+                has_beach_bar=form.cleaned_data['has_beach_bar'],
+                latitude=form.cleaned_data['latitude'],
+                longitude=form.cleaned_data['longitude'],
+                image=form.cleaned_data['image'],
+            )
+            messages.success(
+                request,
+                "Добавихте плаж успешно. Изчаква одобрение от администратор."
+            )
+            return redirect("map")
     else:
-        form = forms.BeachAddForm(initial={'latitude': lat, 'longitude': lng})
+        # Pre-fill coordinates from the querystring
+        form = forms.BeachAddForm(initial={"latitude": lat, "longitude": lng})
 
-    return render(request, 'app/beaches/beach_add.html', {'form': form})
+    return render(request, "app/beaches/beach_add.html", {"form": form})
+
 
 
 #* ===== MODERATION ===== *#
@@ -565,9 +560,10 @@ def view_logs_spec(request, beach_id):
     })
 
 @login_required
-def view_my_logs(request, beach_id):
+def view_my_logs(request):
     user = request.user
-    
-    logs = models.Beach.objects.filter(user = user)
-    
-    return render(request, 'app/logs/my_logs.html', logs)
+    logs = models.BeachLog.objects.filter(user = user)
+    context = {
+        'logs': logs
+    }
+    return render(request, 'app/logs/my_logs.html', context)
