@@ -12,57 +12,16 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css?family=Onest:100,200,300,400,500,600,700,800,900" rel="stylesheet">
-
-    <style>
-        * { font-family: "Onest", sans-serif; }
-        html, body { height: 100%; margin: 0; }
-
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 220px;
-            height: 100%;
-            background-color: #0d6efd;
-            color: #fff;
-            padding-top: 1rem;
-        }
-        .sidebar .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            padding: 0 1rem 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            margin-bottom: 1rem;
-        }
-        .sidebar a {
-            display: block;
-            color: #fff;
-            text-decoration: none;
-            padding: 0.75rem 1rem;
-            margin: 0.25rem 0;
-            border-radius: 0.5rem;
-            transition: background 0.2s;
-        }
-        .sidebar a:hover,
-        .sidebar a.active {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Content */
-        .content {
-            margin-left: 220px;
-            padding: 2rem;
-            min-height: 100%;
-            background-color: #f5f7fa;
-        }
-    </style>
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <!--Favicon-->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.png' %}">
 </head>
 <body>
 
     <!-- Sidebar -->
     <div class="sidebar">
-        <div class="logo">🌊 SeaSight</div>
+        <div class="logo">SeaSight</div>
         <a href="{% url 'account' %}" class="active">
             <i class="bi bi-person"></i> My Account
         </a>
@@ -88,13 +47,10 @@
         {% endif %}
 
         <div class="container-fluid">
-            <h1 class="mb-4">Welcome to SeaSight Dashboard</h1>
-            <p class="lead">
-                Use the sidebar to navigate between
-                <strong>My Account</strong>, <strong>Map</strong>, and <strong>My Logs</strong>.
-            </p>
+            <h1 class="fw-semibold fs-1">Dashboard</h1>
+            <p class="text-sm">Welcome back, <span class="text-primary">{{user.username}}</span>!</p>
 
-            <div class="row g-4 mt-4">
+            <div class="row g-4 mt-4" style="height: 100vh;">
                 <div class="col-md-4">
                     <div class="card shadow-sm border-0">
                         <div class="card-body">

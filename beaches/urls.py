@@ -30,4 +30,5 @@ urlpatterns = [
     path('logs/my-logs/all/', views.view_my_logs, name='my_logs'),
     #* MISC:
     path('account/setup/', views.enter_details, name='enter_details'),
+    path('', views.redirect_from_empty_link, name='redirect_from_empty_link')
 ]

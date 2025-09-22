@@ -204,7 +204,7 @@ class BeachReport(models.Model):
     )
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     beach = models.ForeignKey(Beach, on_delete=models.CASCADE)
-    submitted_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)  # already correct
+    submitted_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     title = models.CharField(max_length=50)
     description = models.CharField(max_length=500)
@@ -213,6 +213,41 @@ class BeachReport(models.Model):
     
     def __str__(self):
         return (f"Report \"{self.title}\", made by {self.submitted_by.username} on {self.date}.")
+    
+#* ===== GAMIFICATION ===== *#
+class Task(models.Model):
+    TASK_TAG_CHOICES = (
+        ('contribution','Принос'),
+        ('review','Мнение')
+    )
+    
+    title = models.CharField(max_length=50)
+    description = models.TextField(max_length=200)
+    reward = models.PositiveSmallIntegerField()
+    tag = models.CharField(choices=TASK_TAG_CHOICES, max_length=50)
+    
+    def __str__(self):
+        return self.title
+
+class AcceptedTask(models.Model):
+    user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+
+    STATUS_CHOICES = (
+        ('accepted', 'В прогрес'),
+        ('completed', 'Завършено'),
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='accepted')
+
+    accepted_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('user_profile', 'task')
+
+    def __str__(self):
+        return f"{self.user_profile.user.username}'s {self.task.title} task"
 
 class Badge(models.Model):
     title = models.CharField(max_length=50)

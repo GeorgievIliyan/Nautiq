@@ -1,11 +1,25 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SeaSight | Delete Account</title>
+    <title>SeaSight | Delete account</title>
+    <!--BOOTSTRAP-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <!--Favicon-->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.png' %}">
 </head>
 <body>
-    
+    <h1>Сигурне ли сте че, искате да изтриете вашия акаунт?</h1>
+    <p class="text-muted text-center">Ако потвърдите, ще бъде изпратен емайл на вашия акаунт, за да потвърдите вашия избор.</p>
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">Да</button>
+        <button class="btn btn-danger" onclick="history.back()">Назад</button>
+    </form>
+    <!--BOOTSTRAP JS-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 </body>
 </html>

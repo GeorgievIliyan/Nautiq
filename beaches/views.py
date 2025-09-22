@@ -310,7 +310,7 @@ def dashboard(request):
     
     if user.is_first_login:
         return redirect('enter_details')
-    return render(request, 'app/dashboard.html')
+    return render(request, 'app/dashboard.html', {'user': user})
 
 @login_required
 def map_view(request):
@@ -567,3 +567,7 @@ def view_my_logs(request):
         'logs': logs
     }
     return render(request, 'app/logs/my_logs.html', context)
+
+#* ===== MISC VIEWS ===== *#
+def redirect_from_empty_link(request):
+    return redirect('dashboard')
