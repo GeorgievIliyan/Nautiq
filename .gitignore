@@ -30,12 +30,6 @@ MANIFEST
 .pytest_cache/
 htmlcov/
 
-# Django-specific stuff
-/media/
-/static/
-db.sqlite3
-/staticfiles/
-
 # IDE files
 .vscode/
 .idea/
