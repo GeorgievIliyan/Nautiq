@@ -13,10 +13,10 @@ from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
-from django.core.mail import send_mail
 from django.urls import reverse
 from django.db.models import Count
 from django.conf import settings
+from django.template.loader import render_to_string
 
 # Third-party imports
 from validators.numbers_validator import is_valid_number as has_number
@@ -47,6 +47,9 @@ User = get_user_model()
 #* ===== USER AUTHENTICATION ===== *#
 
 def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
     if request.method == "POST":
         form = forms.RegisterForm(request.POST)
         
@@ -86,12 +89,15 @@ def register_view(request):
                 confirmation_link = request.build_absolute_uri(
                     reverse('activate', kwargs={'uidb64': uid, 'token': token})
                 )
+                
+                html_content = render_to_string('emails/confirm_account.html', {'username': username, 'confirmation_link': confirmation_link})
 
                 send_mail(
-                    'Потвърдете вашия акаунт в SeaSight',
-                    f'Здравей {username},\n\nМоля, потвърдете акаунта си като натиснете линка:\n{confirmation_link}\n\nБлагодарим! \nПоздрави: Екипа на SeaSight',
-                    'georgiev.iliyan09@gmail.com',
-                    [user.email],
+                    subject= 'Потвърдете вашия акаунт в SeaSight',
+                    html_message=html_content,
+                    message=f'Здравей {username},\n\nМоля, потвърдете акаунта си като натиснете линка:\n{confirmation_link}\n\nБлагодарим! \nПоздрави: Екипа на SeaSight',
+                    recipient_list=[email],
+                    from_email= settings.DEFAULT_FROM_EMAIL,
                     fail_silently=False,
                 )
 
@@ -211,16 +217,24 @@ def enter_mail(request):
             reset_link = request.build_absolute_uri(
                 reverse("set_new_password_from_mail", kwargs={"uidb64": uid, "token": token})
             )
+            
+            html_content = render_to_string('emails/reset_password_mail.html', {'user_name': 'Alex'})
 
-            send_mail(
-                "Възстановяване на парола - SeaSight",
-                f"Здравей {user.username},\n\nМожете да промените паролата си през този линк:\n{reset_link}\n\nПоздрави,\nЕкипа на SeaSight",
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
-            )
-            messages.success(request, "Изпратихме ви имейл с линк за смяна на парола.")
-            return redirect("login")
+            try:
+                send_mail(
+                    subject = "Възстановяване на парола - SeaSight",
+                    message = f"Здравей {user.username},\n\nМожете да промените паролата си през този линк:\n{reset_link}\n\nПоздрави,\nЕкипа на SeaSight",
+                    from_email= settings.DEFAULT_FROM_EMAIL,
+                    recipient_list= [user.email],
+                    html_message=html_content, 
+                    fail_silently=False,
+                )
+                messages.success(request, "Изпратихме ви имейл с линк за смяна на парола.")
+                return redirect("login")
+            except Exception as ResetPasswordMailError:
+                print(f"An error occured while trying to send a reset password mail: {ResetPasswordMailError}")
+                messages.error(request, "Възникна грешка! Моля, опитайте отново!")
+                
         else:
             messages.error(request, "Няма потребител с този имейл.")
 
@@ -411,7 +425,6 @@ def beach_add(request):
             )
             return redirect("map")
     else:
-        # Pre-fill coordinates from the querystring
         form = forms.BeachAddForm(initial={"latitude": lat, "longitude": lng})
 
     return render(request, "app/beaches/beach_add.html", {"form": form})
