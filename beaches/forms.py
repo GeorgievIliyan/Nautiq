@@ -50,7 +50,7 @@ class BeachAddForm(forms.Form):
     latitude = forms.DecimalField(
         max_digits=20,
         decimal_places=18,
-        label="Latitude",
+        label="Широчина",
         widget=forms.TextInput(
             attrs={"readonly": "readonly", "class": "form-control"}
         )
@@ -58,7 +58,7 @@ class BeachAddForm(forms.Form):
     longitude = forms.DecimalField(
         max_digits=20,
         decimal_places=18,
-        label="Longitude",
+        label="Дължина",
         widget=forms.TextInput(
             attrs={"readonly": "readonly", "class": "form-control"}
         )
@@ -66,7 +66,7 @@ class BeachAddForm(forms.Form):
     image = forms.ImageField(
         required=True,
         label="Снимка:",
-        help_text="Моля, добавете снимки, за да докажете..."
+        help_text="Изискваме снимка, за да сме сигурни, че това е плажна зона. "
     )
     name = forms.CharField(
         max_length=100,
@@ -117,7 +117,7 @@ class ReportBeachForm(forms.Form):
         required=False,
         label="Описание на проблема: ",
         help_text="*незадължително",
-        widget=forms.Textarea(attrs={'rows': 4})
+        widget=forms.Textarea(attrs={'rows': 2, 'style': 'max-height: 500px;'})
     )
 
 #* ===== BEACH LOGGING ===== *#

@@ -1,67 +1,83 @@
 {% load widget_tweaks %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Create Entry</title>
-
-    <!-- Bootstrap 5 CSS & Icons -->
+    <title>SeaSight | Добави плаж</title>
+    <!-- Bootstrap & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- CSS -->
+    <!-- Fonts-->
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
 </head>
-<body>
 
-<div class="form-card">
-    <div class="form-card-header text-center">
-        <h2 class="mb-0">Добави плаж <i class="bi bi-plus-circle"></i></h2>
-    </div>
-    <div class="form-card-body">
-        <form method="post" enctype="multipart/form-data" novalidate>
-            {% csrf_token %}
+<style>
+    textarea{
+        max-height: 200px;
+    }
+</style>
 
-            <!-- Hidden lat/lng fields -->
-            <input type="hidden" name="latitude" id="id_latitude" value="{{ form.initial.latitude }}">
-            <input type="hidden" name="longitude" id="id_longitude" value="{{ form.initial.longitude }}">
+<body class="bg-light">
 
-            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-                {% csrf_token %}
-                {% for field in form %}
-                    <div class="mb-3">
-                        {% if field.widget_type == "checkbox" %}
-                            <div class="form-check">
-                                {{ field|add_class:"form-check-input" }}
-                                <label class="form-check-label" for="{{ field.id_for_label }}">
-                                    {{ field.label }}
-                                </label>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-12">
+            <div class="card shadow-sm rounded-4">
+                <div class="card-header bg-primary text-white text-center rounded-top-4 p-3">
+                    <h2 class="mb-0 fw-bold">
+                        Добави плаж <i class="bi bi-plus-circle"></i>
+                    </h2>
+                    <p class="small mb-0">Попълнете информацията за новия плаж</p>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        <input type="hidden" name="latitude" id="id_latitude" value="{{ form.initial.latitude }}">
+                        <input type="hidden" name="longitude" id="id_longitude" value="{{ form.initial.longitude }}">
+
+                        {% for field in form %}
+                        <div class="mb-3">
+                            {% if field.widget_type == "checkbox" %}
+                                <div class="form-check form-switch">
+                                    {{ field|add_class:"form-check-input" }}
+                                    <label class="form-check-label" for="{{ field.id_for_label }}">
+                                        {{ field.label }}
+                                    </label>
+                                    {% if field.help_text %}
+                                        <div class="form-text text-muted small">{{ field.help_text }}</div>
+                                    {% endif %}
+                                    {% for error in field.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field|add_class:"form-control shadow-sm" }}
                                 {% if field.help_text %}
-                                    <div class="form-text text-muted">{{ field.help_text }}</div>
+                                    <div class="form-text text-muted small">{{ field.help_text }}</div>
                                 {% endif %}
                                 {% for error in field.errors %}
                                     <div class="invalid-feedback d-block">{{ error }}</div>
                                 {% endfor %}
-                            </div>
-                        {% else %}
-                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                            {{ field|add_class:"form-control" }}
-                            {% if field.help_text %}
-                                <div class="form-text text-muted">{{ field.help_text }}</div>
                             {% endif %}
-                            {% for error in field.errors %}
-                                <div class="invalid-feedback d-block">{{ error }}</div>
-                            {% endfor %}
-                        {% endif %}
-                    </div>
-                {% endfor %}
+                        </div>
+                        {% endfor %}
 
-                <button type="submit" class="btn btn-primary w-100 mt-3">
-                    Създай <i class="bi bi-plus-circle"></i>
-                </button>
-            </form>
+                        <p class="text-danger small"><i class="bi bi-exclamation-triangle-fill"></i> Преди да могат всички да преглеждат този плаж, първо заявката ви трябва да бъде одобрена от администратор.</p>
+
+                        <button type="submit" class="btn btn-primary w-100 mt-3 fw-semibold shadow-sm">
+                            Подай <i class="bi bi-arrow-right-short"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 </body>
