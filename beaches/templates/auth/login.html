@@ -1,132 +1,104 @@
-{% load widget_tweaks %}
 {% load static %}
+{% load widget_tweaks %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SeaSight | Влизане</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-    <link rel="stylesheet" href="{% static 'styles.css' %}">
-    <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.png' %}">
-
-    <style>
-        /* Optional: If you can't edit styles.css, add a simple custom color here */
-        /* .btn-custom-primary {
-            background-color: #007bff; /* Example: A strong blue */
-            /* border-color: #007bff;
-        }
-        .btn-custom-primary:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-        } */
-        /* To ensure the image cover is perfect */
-        .h-100-vh {
-            height: 100vh;
-        }
-    </style>
+    <title>SeaSight | Вписване</title>
+    <link rel="stylesheet" href="{% static 'auth.css' %}">
 </head>
-<body class="bg-light d-flex align-items-center justify-content-center min-vh-100 user-select-none">
+<body>
+    <img src="{% static 'images/login_img.jpg' %}" class="auth-image">
 
-    <div class="card shadow-lg border-0 rounded-4 overflow-hidden" style="max-width: 1000px; width: 90%;">
-        <div class="row g-0">
-            
-            <div class="col-md-6 d-none d-md-block position-relative bg-dark">
-                <img src="{% static 'images/login_img.jpg' %}" 
-                        class="img-fluid h-100 w-100 object-fit-cover opacity-75" 
-                        alt="SeaSight graphic" style="min-height: 450px;">
-                <div class="position-absolute top-0 start-0 p-4 p-lg-5 text-white">
-                    <h3 class="fw-light mt-3">Добре дошли в SeaSight</h3>
-                    <p class="lead">Вашата платформа за управление на морски данни.</p>
-                </div>
+    <div class="form-section">
+        <div class="rectangle" aria-hidden="true"></div>
+        <div class="form-section-top">
+            <div class="branding">
+                <img class="brand-icon" src="{% static 'images/logo/logo.png' %}" />
+                <div class="text-wrapper">SeaSight</div>
             </div>
-
-            <div class="col-md-6 d-flex align-items-center p-4 p-lg-5 bg-white">
-                <div class="w-100">
-
-                    <div class="d-flex align-items-center mb-4 border-bottom pb-3">
-                        <img src="{% static 'images/logo/logo.png' %}" 
-                                class="me-3" 
-                                style="width:40px; height:40px;" 
-                                alt="SeaSight Logo">
-                        <span class="fw-bolder fs-4 text-primary">SeaSight</span>
-                    </div>
-
-                    <h2 class="fw-bolder mb-2 text-dark">Влизане</h2>
-                    <p class="mb-4 text-muted fs-6">
-                        Нямате акаунт? 
-                        <a href="{% url 'register' %}" 
-                            class="fw-bold link-primary text-decoration-none">
-                            Регистрайте се <i class="bi bi-person-plus-fill"></i>
-                        </a>
-                    </p>
-
-                    {% if messages %}
-                        <div class="mb-3">
-                            {% for message in messages %}
-                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-3" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
-                    <form method="post" class="needs-validation">
-                        {% csrf_token %}
-                        
-                        {% for field in form %}
-                            <div class="mb-3">
-                                <label for="{{ field.id_for_label }}" class="form-label fw-semibold visually-hidden">
-                                    {{ field.label }}
-                                </label>
-                                
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text bg-light text-primary border-end-0 rounded-start-3" id="icon-addon">
-                                        {% if 'потребител' in field.label|lower or 'username' in field.label|lower %}
-                                            <i class="bi bi-person-fill fs-6"></i>
-                                        {% elif 'парола' in field.label|lower or 'password' in field.label|lower %}
-                                            <i class="bi bi-key-fill fs-5"></i>
-                                        {% else %}
-                                            <i class="bi bi-pencil-fill"></i>
-                                        {% endif %}
-                                    </span>
-
-                                    {% if field.errors %}
-                                        {{ field|add_class:"form-control rounded-end-3 border-start-0 is-invalid"|attr:"placeholder:Въведете "|attr:field.label }}
-                                        {% for error in field.errors %}
-                                            <div class="invalid-feedback">{{ error }}</div>
-                                        {% endfor %}
-                                    {% else %}
-                                        {{ field|add_class:"form-control rounded-end-3 border-start-0"|attr:"placeholder:Въведете "|attr:field.label }}
-                                    {% endif %}
-                                </div>
-                                {% if field.help_text %}
-                                    <div class="form-text mt-1 ms-4">{{ field.help_text }}</div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-
-                        <button type="submit" class="btn btn-primary w-100 rounded-3 py-3 fw-bold shadow-sm transition-shadow">
-                            Влизане <i class="bi bi-box-arrow-in-right fs-5 align-middle ms-1"></i>
-                        </button>
-                    </form>
-
-                    <p class="mt-4 text-center">
-                        Забравена парола? 
-                        <a href="{% url 'enter_mail' %}" 
-                            class="fw-semibold link-primary text-decoration-none">
-                            Обнови <i class="bi bi-arrow-clockwise"></i>
-                        </a>
-                    </p>
-
-                </div>
+            <div class="header">
+                <h1>Вписване</h1>
+                <p>Нямате акаунт? <a href="{% url 'register' %}" class="link-primary-bold">Регистрирайте се</a></p>
+            </div>
+            <div class="seperator">
             </div>
         </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <form method="post">
+            {% csrf_token %}
+
+            {% for message in messages %}
+                <div class="alert-{{message.tags}}">
+                    
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-octagon" viewBox="0 0 16 16">
+                        <path d="M4.54.146A.5.5 0 0 1 4.893 0h6.214a.5.5 0 0 1 .353.146l4.394 4.394a.5.5 0 0 1 .146.353v6.214a.5.5 0 0 1-.146.353l-4.394 4.394a.5.5 0 0 1-.353.146H4.893a.5.5 0 0 1-.353-.146L.146 11.46A.5.5 0 0 1 0 11.107V4.893a.5.5 0 0 1 .146-.353zM5.1 1 1 5.1v5.8L5.1 15h5.8l4.1-4.1V5.1L10.9 1z"/>
+                        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+                    </svg>
+
+                    {{message}}
+
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg alert-close" viewBox="0 0 16 16">
+                        <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                    </svg>
+                </div>
+            {% endfor %}
+            
+            {% for field in form %}
+                <div class="input-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% if field.errors %}
+                    {{ field|add_class:"input-error" }}
+                {% else %}
+                    {{ field }}
+                {% endif %}
+
+                    {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="input-group-inline">
+                <input type="checkbox">
+                <label>Запомни ме на това устройство</label>
+            </div>
+            
+            <button class="btn-primary" type="submit" aria-label="Влизане">
+                Влизане
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/>
+                </svg>
+            </button>
+        </form>
+
+        <span class="help">Забравена парола? 
+            <a href="{% url 'enter_mail' %}" class="link-primary">
+                Обновете
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
+                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>
+                </svg>
+            </a>  
+        </span>
+    </div>
 </body>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const closeButtons = document.querySelectorAll('.alert-close');
+
+        closeButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const alert = this.parentElement;
+                alert.style.transition = 'opacity 0.3s ease, height 0.3s ease';
+                alert.style.opacity = '0';
+                alert.style.height = '0';
+                setTimeout(() => alert.remove(), 300);
+            });
+        });
+    });
+</script>
+
 </html>

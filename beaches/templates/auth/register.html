@@ -1,104 +1,56 @@
-{% load widget_tweaks %}
 {% load static %}
+{% load widget_tweaks %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SeaSight | Register</title>
-
-    <!-- Bootstrap & Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-
-    <!-- CSS -->
-    <link rel="stylesheet" href="{% static 'styles.css' %}">
-    <!--Favicon-->
-    <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.png' %}">
+    <title>SeaSight | Регистрация</title>
+    <link rel="stylesheet" href="{% static 'auth.css' %}">
 </head>
-<body class="bg-light d-flex align-items-center justify-content-center min-vh-100 user-select-none">
+<body>
+    <img src="{% static 'images/login_img.jpg' %}" class="auth-image">
 
-    <div class="card shadow-lg border-0 rounded-4 overflow-hidden w-100" style="max-width: 900px;">
-        <div class="row g-0">
-            
-            <!-- Left image (visible on md+) -->
-            <div class="col-md-6 d-none d-md-block">
-                <img src="{% static 'images/login_img.jpg' %}" 
-                    class="img-fluid h-100 object-fit-cover" 
-                    alt="SeaSight graphic">
+    <div class="form-section">
+        <div class="rectangle" aria-hidden="true"></div>
+        <div class="form-section-top">
+            <div class="branding">
+                <img class="brand-icon" src="{% static 'images/logo/logo.png' %}" />
+                <div class="text-wrapper">SeaSight</div>
             </div>
-
-            <!-- Form Section -->
-            <div class="col-md-6 d-flex align-items-center p-5 bg-white">
-                <div class="w-100">
-
-                    <!-- Logo
-                    <div class="d-flex align-items-center mb-4">
-                        <img src="{% static 'images/logo.png' %}" 
-                                class="me-2" 
-                                style="width:36px; height:36px;" 
-                                alt="Logo">
-                        <span class="fw-bold fs-5">SeaSight</span>
-                    </div>
-                    -->
-
-                    <!-- Title -->
-                    <h2 class="fw-semibold mb-2">Регистриране</h2>
-                    <p class="mb-4 text-muted">
-                        Вече имате акаунт?
-                        <a href="{% url 'login' %}" class="fw-semibold link-primary text-decoration-none">
-                            Влизане <i class="bi bi-box-arrow-in-right"></i>
-                        </a>
-                    </p>
-
-                    <!-- Django messages -->
-                    {% if messages %}
-                        <div class="mb-3">
-                            {% for message in messages %}
-                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="btn-close focus-none" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
-
-                    <!-- Form -->
-                    <form method="post" class="needs-validation">
-                        {% csrf_token %}
-                        {% for field in form %}
-                            <div class="mb-3">
-                                <label for="{{ field.id_for_label }}" class="form-label fw-semibold">
-                                    {{ field.label }}
-                                </label>
-
-                                {% if field.errors %}
-                                    {{ field|add_class:"form-control rounded-3 is-invalid" }}
-                                    {% for error in field.errors %}
-                                        <div class="invalid-feedback">{{ error }}</div>
-                                    {% endfor %}
-                                {% else %}
-                                    {{ field|add_class:"form-control rounded-3" }}
-                                {% endif %}
-
-                                {% if field.help_text %}
-                                    <div class="form-text">{{ field.help_text }}</div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-
-                        <button type="submit" class="btn btn-primary w-100 rounded-3 py-2 fw-semibold">
-                            Регистрай <i class="bi bi-person-plus-fill fs-5 ms-1"></i>
-                        </button>
-                    </form>
-
-                </div>
+            <div class="header">
+                <h1>Регистрация</h1>
+                <p>Имате акаунт? <a href="{% url 'login' %}" class="link-primary-bold">Вписване</a></p>
+            </div>
+            <div class="seperator">
             </div>
         </div>
-    </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <form method="post">
+            {% csrf_token %}
+            
+            {% for field in form %}
+                <div class="input-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% if field.errors %}
+                    {{ field|add_class:"input-error" }}
+                {% else %}
+                    {{ field }}
+                {% endif %}
+
+                    {% if field.help_text %}
+                    <p class="help-text">{{ field.help_text }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            
+            <button class="btn-primary" type="submit" aria-label="Влизане">
+                Регистрай
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/>
+                </svg>
+            </button>
+        </form>
+    </div>
 </body>
 </html>
