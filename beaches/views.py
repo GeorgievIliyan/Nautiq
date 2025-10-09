@@ -158,6 +158,7 @@ def logout_view(request):
 
 def login_view(request):
     if request.method == "POST":
+        print('User details send succesfully!')
         form = forms.LoginForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
@@ -172,9 +173,11 @@ def login_view(request):
 
             if user is None:
                 messages.error(request, 'Възникна грешка! Моля опитайте отново.')
+                print('error')
                 return render(request, 'auth/login.html', {'form': form})
             elif not user.is_active:
                 messages.error(request, f'Моля потвърдете своя профил на {email}, преди да продължите!')
+                print('error')
                 return render(request, 'auth/login.html', {'form': form})
             else:
                 login(request, user)

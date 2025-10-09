@@ -18,7 +18,116 @@ body {
 
 /* Root Variables */
 :root {
-    --color-primary: #048FE6;
+	/* ---------- COLORS ---------- */
+	--color-primary: #048FE6;
+	--color-success: #2ECC71;
+	--color-danger: #E63946;
+	--color-warning: #F5B700;
+
+	/* ---------- BUTTONS ---------- */
+	--button-primary: var(--color-primary);
+	--button-success: var(--color-success);
+	--button-danger: var(--color-danger);
+	--button-warning: var(--color-warning);
+
+	/* ---------- BORDERS ---------- */
+	--border-success: var(--color-success);
+	--border-danger: var(--color-danger);
+	--border-warning: var(--color-warning);
+    --border-primary: var(--color-primary);
+
+	/* ---------- BACKGROUNDS ---------- */
+	--background-primary: #FCFCFC;
+	--background-secondary: ;
+
+	/* ---------- TYPOGRAPHY ---------- */
+	--font-family-base: ;
+	--font-family-heading: ;
+	--font-size-sm: ;
+	--font-size-md: ;
+	--font-size-lg: ;
+	--line-height-base: ;
+
+	/* ---------- SPACING ---------- */
+	--space-xs: ;
+	--space-sm: ;
+	--space-md: ;
+	--space-lg: ;
+	--space-xl: ;
+
+    /* ---------- INPUTS ---------- */
+    --input-bg: #fcfcfc;
+
+	/* ---------- RADIUS ---------- */
+	--radius-sm: 5px;
+	--radius-md: 10px;
+	--radius-lg: 15px;
+    --radius-circle: 50%;
+	
+    /* ---------- SHADOWS ---------- */
+    --shadow-sm: ;
+	--shadow-md: ;
+	--shadow-lg: ;
+
+    /* ---------- GLOWS ---------- */
+    --glow-stndrt: filter: blur(60px);
+    
+    /* ---------- OPACITIES ---------- */
+
+    --opacity-5: 5%;
+    --opacity-10: 10%;
+    --opacity-20: 20%;
+    --opacity-30: 30%;
+    --opacity-40: 40%;
+    --opacity-50: 50%;
+    --opacity-60: 60%;
+    --opacity-70: 70%;
+    --opacity-80: 80%;
+    --opacity-90: 90%;
+    --opacity-95: 95%;
+
+	/* ---------- TRANSITIONS ---------- */
+	--transition-speed: 0.2s;
+	--transition-easing: ease-in-out;
+}
+
+:root {
+	/* ---------- TEXT ---------- */
+	--text-dark: #222222;
+	--text-light: #F8F8F8;
+	--text-primary: var(--color-primary);
+	--text-success: var(--color-success);
+	--text-danger: var(--color-danger);
+	--text-warning: var(--color-warning);
+
+	/* ---------- HELP TEXT & PLACEHOLDER ---------- */
+	--text-help: #939393;
+	--placeholder: #C8C8C8;
+
+	/* ---------- SUBTLE BORDER ---------- */
+	--border-subtle: #EEEEEE;
+}
+
+/* ---------- DARK MODE ---------- */
+@media (prefers-color-scheme: dark) {
+	:root {
+		/* ---------- TEXT ---------- */
+		--text-dark: #F8F8F8;
+		--text-light: ;
+		--text-primary: var(--color-primary);
+		--text-success: var(--color-success);
+		--text-danger: var(--color-danger);
+		--text-warning: var(--color-warning);
+
+		/* ---------- HELP TEXT & PLACEHOLDER ---------- */
+		--text-help: #989898;
+		--placeholder: #656566;
+
+		/* ---------- BORDERS ---------- */
+		--border-subtle: #383838;
+
+
+	}
 }
 
 /* Layout & Sections */
@@ -70,6 +179,26 @@ body {
 .header h1 {
     font-size: 64px;
     margin-bottom: 0;
+}
+
+.password-wrapper {
+    position: relative;
+    display: flex;
+    width: 100%;
+}
+.password-wrapper input {
+    width: 100%;
+    padding-right: 40px;
+}
+.password-wrapper .toggle-btn {
+    position: absolute; 
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-primary);
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 10;
 }
 
 /* Links */
