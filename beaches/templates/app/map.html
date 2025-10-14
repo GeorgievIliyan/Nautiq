@@ -6,9 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SeaSight | Map</title>
 
-    <!-- Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <!--MAPLIBRE-->
+    <link href='https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.css' rel='stylesheet' />
+    <script src='https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.js'></script>
+    <link rel="stylesheet" href="https://unpkg.com/@maplibre/maplibre-gl-controls@1.3.0/dist/maplibre-gl-controls.min.css" />
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-controls@1.3.0/dist/maplibre-gl-controls.umd.js"></script>
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
@@ -174,53 +176,88 @@
     <!-- BOOTSTRAP JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 
-    <!-- LEAFLET & EXISTING JS (UNCHANGED) -->
     <script>
-        const lat = parseFloat(document.getElementById('user_lat').textContent);
-        const lng = parseFloat(document.getElementById('user_lng').textContent);
+        const JAWG_ACCESS_TOKEN = '{{ jawg_token }}'; 
 
-        window.onload = function() {
-            var map = L.map('map').setView([lat, lng], 14);
+        const USER_LAT = parseFloat(document.getElementById('user_lat').textContent);
+        const USER_LNG = parseFloat(document.getElementById('user_lng').textContent);
+        const BEACHES_DATA = JSON.parse(document.getElementById('beaches_json').textContent);
+        
+        const REPORT_URL_BASE = "{% url 'report_beach' '00000000-0000-0000-0000-000000000000' %}";
+        const LOG_URL_BASE = "{% url 'log_beach' '00000000-0000-0000-0000-000000000000' %}";
+        const LOG_SPEC_URL_BASE = "{% url 'log_beach_spec' '00000000-0000-0000-0000-000000000000' %}";
+        const ADD_BEACH_URL_BASE = "{% url 'beach_add' %}"; 
+        
+        const displayValue = val => val === null ? "Няма информация" : val;
 
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map);
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: `https://api.jawg.io/styles/jawg-lagoon.json?access-token=${JAWG_ACCESS_TOKEN}`,
+            zoom: 14,
+            center: [USER_LNG, USER_LAT]
+        });
 
-            let beaches = JSON.parse(document.getElementById('beaches_json').textContent);
+        map.addControl(new maplibregl.AttributionControl({ 
+            compact: true 
+        }));
+
+        maplibregl.setRTLTextPlugin(
+            'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js'
+        );
+
+        map.on('load', function() {
             let userMarker = null;
 
-            const displayValue = val => val === null ? "Няма информация" : val;
+            const createMapLibreMarker = (coordinates) => {
+                return new maplibregl.Marker()
+                    .setLngLat(coordinates)
+                    .addTo(map);
+            };
 
             map.on('click', (e) => {
-                if (userMarker) map.removeLayer(userMarker);
-                userMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+                if (userMarker) {
+                    userMarker.remove();
+                }
+                
+                const coordinates = [e.lngLat.lng, e.lngLat.lat]; 
+                userMarker = createMapLibreMarker(coordinates);
 
-                userMarker.bindPopup(`
+                const addBeachUrl = `${ADD_BEACH_URL_BASE}?lat=${e.lngLat.lat}&lng=${e.lngLat.lng}`; 
+
+                const popupContent = `
                     <div class="p-2">
                         <p class="fs-5 fw-semibold text-primary mb-2 mt-0">Маркер</p>
                         <p class="mb-2">
-                            Координати: ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}
+                            Координати: ${e.lngLat.lat.toFixed(5)}, ${e.lngLat.lng.toFixed(5)}
                         </p>
-                        <a href="{% url 'beach_add' %}?lat=${e.latlng.lat}&lng=${e.latlng.lng}" class="link-primary link-underline-primary">
+                        <a href="${addBeachUrl}" class="link-primary link-underline-primary">
                             Добави като плаж <i class="bi bi-plus-circle"></i>
                         </a>
                     </div>
-                `).openPopup();
-
+                `;
+                
+                userMarker.setPopup(new maplibregl.Popup()
+                    .setHTML(popupContent))
+                .togglePopup();
             });
+            
+            BEACHES_DATA.forEach(beach => {
+                const coordinates = [beach.longitude, beach.latitude];
+                
+                const marker = createMapLibreMarker(coordinates);
 
-            beaches.forEach(beach => {
-                const marker = L.marker([beach.latitude, beach.longitude], { markerId: beach.id }).addTo(map);
-
-                marker.on('click', function() {
-                    fetch(`/beach/${this.options.markerId}/`)
+                marker.getElement().addEventListener('click', function() {
+                    fetch(`/beach/${beach.id}/`)
                         .then(response => {
                             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                             return response.json();
                         })
                         .then(data => {
-                            this.bindPopup(`<b>${displayValue(data.name)}</b>`).openPopup();
+                            const beachPopup = new maplibregl.Popup({ offset: 25 })
+                                .setLngLat(coordinates)
+                                .setHTML(`<b>${displayValue(data.name)}</b>`);
+                            
+                            marker.setPopup(beachPopup).togglePopup();
 
                             const sidebar = document.getElementById("sidebar");
                             if (!sidebar) return;
@@ -236,7 +273,9 @@
                                 <p>Съблекални: ${displayValue(data.has_changing_rooms)}</p>
                                 <p>Тоалетни: ${displayValue(data.has_toilets)}</p>
 
-                                <a id="report-link" class="btn btn-danger mt-3" data-url-base="{% url 'report_beach' '00000000-0000-0000-0000-000000000000' %}">Докладвайте проблем с този плаж</a>
+                                <a id="report-link" class="btn btn-danger mt-3" href="${REPORT_URL_BASE.replace('00000000-0000-0000-0000-000000000000', data.pk)}">
+                                    Докладвайте проблем с този плаж
+                                </a>
 
                                 <h3 class="mt-5">Условията днес: </h3>
                                 <p>Честота на водата: ${displayValue(data.clarity_avr)}</p>
@@ -248,34 +287,27 @@
                                 <p>Вълни: ${displayValue(data.waves)}</p>
                                 <p>Място за паркиране: ${displayValue(data.parking_space)}</p>
 
-                                <a id="log-link" class="btn btn-primary" data-url-base="{% url 'log_beach' '00000000-0000-0000-0000-000000000000' %}">Докладвайте данни за този плаж</a>
+                                <a id="log-link" class="btn btn-primary" href="${LOG_URL_BASE.replace('00000000-0000-0000-0000-000000000000', data.pk)}">
+                                    Докладвайте данни за този плаж
+                                </a>
                                 <a id="spec-log-link"
                                     class="btn btn-success mt-3"
-                                    href="#"
-                                    data-url-base="{% url 'log_beach_spec' '00000000-0000-0000-0000-000000000000' %}">
+                                    href="${LOG_SPEC_URL_BASE.replace('00000000-0000-0000-0000-000000000000', data.pk)}">
                                         Доклади за днес
                                 </a>
                             `;
-
-                            const logLink = document.getElementById('log-link');
-                            if (logLink) logLink.href = logLink.dataset.urlBase.replace('00000000-0000-0000-0000-000000000000', data.pk);
-
-                            const reportLink = document.getElementById('report-link');
-                            if (reportLink) reportLink.href = reportLink.dataset.urlBase.replace('00000000-0000-0000-0000-000000000000', data.pk);
-
-                            const specLogLink = document.getElementById('spec-log-link');
-                            if (specLogLink) specLogLink.href = specLogLink.dataset.urlBase.replace(
-                                '00000000-0000-0000-0000-000000000000',
-                                data.pk
-                            );
                         })
                         .catch(error => {
                             console.error('Fetch error:', error);
-                            this.bindPopup('Възникна грешка!').openPopup();
+                            const errorPopup = new maplibregl.Popup({ offset: 25 })
+                                .setLngLat(coordinates)
+                                .setHTML('Възникна грешка!');
+                            
+                            marker.setPopup(errorPopup).togglePopup();
                         });
                 });
             });
-        }
+        });
     </script>
 
 </body>

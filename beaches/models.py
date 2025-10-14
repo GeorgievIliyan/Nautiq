@@ -8,6 +8,10 @@ class User(AbstractUser):
     is_first_login = models.BooleanField(default=True)
 
 class UserProfile(models.Model):
+    LANGUAGE_CHOICES = (
+        ('bg', 'Български'),
+        ('en', 'Английски')
+    )
     
     id = models.UUIDField(
         primary_key=True,
@@ -18,10 +22,17 @@ class UserProfile(models.Model):
     nickname = models.CharField(max_length=50, null=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     
+    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    
     lat = models.CharField(null=True, blank=True, default=48.8566)
     lng = models.CharField(null=True, blank=True, default=2.3522)
     
     xp = models.IntegerField(default=0)
+    
+    #* SETTINGS & PREFERNCES
+    theme = models.CharField(null=True, blank=True, default="light")
+    send_notifs = models.BooleanField(null=True, blank=True, default="True")
+    language = models.CharField(choices=LANGUAGE_CHOICES)
     
     def __str__(self):
         return self.user.username
@@ -49,13 +60,16 @@ class Beach(models.Model):
     has_parking = models.BooleanField(default=False)
     has_paid_parking = models.BooleanField(default=False)
     
-    #MISC
+    #* MISC
     has_toilets = models.BooleanField(default=False)
     has_changing_rooms = models.BooleanField(default=False)
     
-    # LUXURIES
+    #* LUXURIES
     has_paid_zone = models.BooleanField(default=False)
     has_beach_bar = models.BooleanField(default=False)
+    
+    #* FAVOURITES  
+    favourites = models.ManyToManyField(User, related_name="favourite_beaches", blank=True)
     
     def __str__(self):
         return (F"{self.name}: {self.latitude},{self.longitude}")
@@ -64,7 +78,7 @@ class BeachImage(models.Model):
     title = models.CharField(max_length=100, null=True, blank=True)
     beach = models.ForeignKey(Beach, on_delete=models.CASCADE, blank=True, null=True)
     image = models.ImageField(null=False, blank=False, upload_to='static/beach_images/')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # already correct
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
@@ -127,7 +141,7 @@ class BeachLog(models.Model):
     )
     
     beach = models.ForeignKey(Beach, on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # already correct
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     image = models.ForeignKey(BeachImage, on_delete=models.SET_NULL, blank=True, null=True)
     

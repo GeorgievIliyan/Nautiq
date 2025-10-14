@@ -3,94 +3,27 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SeaSight | Dashboard</title>
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css?family=Onest:100,200,300,400,500,600,700,800,900" rel="stylesheet">
-    <!-- CSS -->
-    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SeaSight | Табло</title>
     <!--Favicon-->
     <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.png' %}">
+    <!--Bootstrap Icons-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 </head>
 <body>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="logo">SeaSight</div>
-        <a href="{% url 'account' %}" class="active">
-            <i class="bi bi-person"></i> My Account
-        </a>
-        <a href="{% url 'map' %}">
-            <i class="bi bi-map"></i> Map
-        </a>
-        <a href="{% url 'my_logs' %}">
-            <i class="bi bi-journal-text"></i> My Logs
-        </a>
-    </div>
-
-    <!-- Main Content -->
-    <div class="content">
-        {% if messages %}
-            <div class="mb-3">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <div class="container-fluid">
-            <h1 class="fw-semibold fs-1">Dashboard</h1>
-            <p class="text-sm">Welcome back, <span class="text-primary">{{user.username}}</span>!</p>
-
-            <div class="row g-4 mt-4" style="height: 100vh;">
-                <div class="col-md-4">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body">
-                            <h5 class="card-title">
-                                <i class="bi bi-person"></i> My Account
-                            </h5>
-                            <p class="card-text">Manage your account details and preferences.</p>
-                            <a href="{% url 'account' %}" class="btn btn-primary btn-sm">Go</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body">
-                            <h5 class="card-title">
-                                <i class="bi bi-map"></i> Map
-                            </h5>
-                            <p class="card-text">View and log sea journeys on the interactive map.</p>
-                            <a href="{% url 'map' %}" class="btn btn-primary btn-sm">Go</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body">
-                            <h5 class="card-title">
-                                <i class="bi bi-journal-text"></i> My Logs
-                            </h5>
-                            <p class="card-text">Access and manage your past logs and entries.</p>
-                            <a href="{% url 'my_logs' %}" class="btn btn-primary btn-sm">Go</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <sea-sight-sidebar
+        data-username="{{ user.username }}"
+        data-level="Level 10"
+        data-pfp="{{ user.profile_image.url }}"
+        dashboard-url="{% url 'dashboard' %}"
+        map-url="{% url 'map' %}"
+        logs-url="{% url 'my_logs' %}"
+        account-url="{% url 'account' %}"
+        logout-url="{% url 'logout' %}"
+        settings-url="{% url 'settings' %}"
+        terms-url="{% url 'terms' %}">
+    </sea-sight-sidebar>
 </body>
+<script src="{% static 'js/closeAlert.js' %}"></script>
+<script src="{% static 'js/sideBar.js' %}?v=2" defer></script>
 </html>

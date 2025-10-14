@@ -18,6 +18,7 @@ urlpatterns = [
     path('map/', views.map_view, name='map'),
     path("beach/<uuid:beach_id>/", views.beach_data, name="beach_data"),
     path('beach/add/', views.beach_add, name='beach_add'),
+    path('favourites/', views.favourite_beaches, name='favourites'),
     #* MODERATION:
     path('moderation/dashboard/', views.dashboard_mod, name='dashborad_mod'),
     #* REPORTING:
@@ -30,5 +31,7 @@ urlpatterns = [
     path('logs/my-logs/all/', views.view_my_logs, name='my_logs'),
     #* MISC:
     path('account/setup/', views.enter_details, name='enter_details'),
+    path('settings/', views.app_settings, name='settings'),
+    path('terms/', views.terms, name="terms"),
     path('', views.redirect_from_empty_link, name='redirect_from_empty_link')
 ]

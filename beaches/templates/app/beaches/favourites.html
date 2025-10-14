@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SeaSight | Любими</title>
+</head>
+<body>
+    
+    {% for favourite in favourites %}
+        <h1>{{ favourite.name }}</h1>
+    {% empty %}
+        <h1>You have no favourites</h1>
+    {% endfor %}
+</body>
+</html>

@@ -1,5 +1,6 @@
 import json
 from datetime import date
+import os
 
 # Django imports
 from django.contrib import messages
@@ -151,10 +152,8 @@ def enter_details(request):
 
 @login_required
 def logout_view(request):
-    if request.method == "POST":
-        logout(request)
-        return redirect('login')
-    return render(request, 'auth/logout.html')
+    logout(request)
+    return redirect('login')
 
 def login_view(request):
     if request.method == "POST":
@@ -331,6 +330,7 @@ def dashboard(request):
 
 @login_required
 def map_view(request):
+    jawg_token = settings.JAWG_ACCESS_TOKEN
     user = request.user
     user_profile = models.UserProfile.objects.filter(user=user).first()
 
@@ -347,10 +347,13 @@ def map_view(request):
         "beaches": list(beaches.values("id", "latitude", "longitude")),
         "user_lat": user_lat,
         "user_lng": user_lng,
+        "jawg_token": jawg_token
     }
     return render(request, "app/map.html", context)
 
 def beach_data(request, beach_id):
+    
+    
     beach = models.Beach.objects.get(id=beach_id)
 
     today_logs = models.BeachLog.objects.filter(beach=beach, date__date=today_dt)
@@ -404,11 +407,12 @@ def beach_data(request, beach_id):
 def beach_add(request):
     lat = request.GET.get("lat")
     lng = request.GET.get("lng")
+    user = request.user
 
     if request.method == "POST":
         form = forms.BeachAddForm(request.POST, request.FILES)
         if form.is_valid():
-            models.Beach.objects.create(
+            added_beach = models.Beach.objects.create(
                 name=form.cleaned_data['name'],
                 description=form.cleaned_data['description'],
                 has_lifeguard=form.cleaned_data['has_lifeguard'],
@@ -420,7 +424,12 @@ def beach_add(request):
                 has_beach_bar=form.cleaned_data['has_beach_bar'],
                 latitude=form.cleaned_data['latitude'],
                 longitude=form.cleaned_data['longitude'],
-                image=form.cleaned_data['image'],
+            )
+            models.BeachImage.objects.create(
+                beach = added_beach,
+                title = added_beach.name,
+                user = user,
+                image = form.cleaned_data['image']
             )
             messages.success(
                 request,
@@ -432,6 +441,12 @@ def beach_add(request):
 
     return render(request, "app/beaches/beach_add.html", {"form": form})
 
+@login_required
+def favourite_beaches(request):
+    user = request.user
+    favourite_beaches = models.Beach.objects.filter(favourites=user)
+    
+    return render(request, 'app/beaches/favourites.html', {'favourites': favourite_beaches})
 
 
 #* ===== MODERATION ===== *#
@@ -587,3 +602,37 @@ def view_my_logs(request):
 #* ===== MISC VIEWS ===== *#
 def redirect_from_empty_link(request):
     return redirect('dashboard')
+
+@login_required
+def app_settings(request):
+    user = request.user
+
+    try:
+        user_profile = models.UserProfile.objects.get(user=user)
+    except models.UserProfile.DoesNotExist:
+        messages.error(request, 'Профилът ви не беше намерен.')
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = forms.SettingsForm(request.POST)
+        if form.is_valid():
+            user_profile.theme = form.cleaned_data['theme']
+            user_profile.send_notifs = form.cleaned_data['notifs']
+            user_profile.language = form.cleaned_data['lang']
+
+            try:
+                user_profile.save()
+                messages.success(request, 'Настройките бяха успешно запазени!')
+                return redirect('app_settings')
+            except Exception:
+                messages.error(request, 'Не успяхме да съхраним вашите настройки! Моля, опитайте отново.')
+        else:
+            messages.error(request, 'Възникна грешка във формата! Проверете въведените данни.')
+    else:
+        form = forms.SettingsForm(initial={
+            'theme': user_profile.theme,
+            'notifs': user_profile.send_notifs,
+            'lang': user_profile.language,
+        })
+
+    return render(request, 'settings.html', {'form': form})

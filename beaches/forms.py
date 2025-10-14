@@ -174,3 +174,24 @@ class LogBeachForm(forms.Form):
         required=False,
         max_length=300
     )
+
+#* ===== MISC ===== *#
+class SettingsForm(forms.Form):
+    THEME_CHOICES = [
+        ('light', 'Светла тема'),
+        ('dark', 'Тъмна тема'),
+        ('system', 'Системна'),
+    ]
+    
+    LANGUAGE_CHOICES = [
+        ('bg', 'Български'),
+        ('en', 'Английски')
+    ]
+    
+    theme = forms.ChoiceField(
+        choices=THEME_CHOICES,
+        widget=forms.RadioSelect(attrs={'class': 'theme-radio'})
+    )
+    
+    notifs = forms.CheckboxInput()
+    lang = forms.ChoiceField(choices=LANGUAGE_CHOICES)
