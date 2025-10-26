@@ -167,6 +167,7 @@ body {
     line-height: 24px;
     color: var(--color-primary);
     font-weight: 600;
+    user-select: none;
 }
 
 /* Header */
@@ -236,6 +237,7 @@ form {
 
 form label {
     font-size: 18px;
+    user-select: none;
 }
 
 form input {
@@ -350,60 +352,6 @@ p.help-text{
 }
 .back-button:hover{
     color: #E63946;
-}
-
-/* alerts */
-.alert-danger{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: 24px;
-    border: 1px solid #E63946;
-    border-radius: 10px;
-    background-color: rgba(230, 57, 70, 0.1);
-    color: #222222;
-    font-size: 16px;
-    gap: 16px;
-}
-.alert-danger svg {
-    color: #E63946;
-    width: 28px;
-    height: 28px;
-    flex-shrink: 0;
-}
-
-.alert-success{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: 24px;
-    border: 1px solid #2ECC71;
-    border-radius: 10px;
-    background-color: rgba(46, 204, 113, 0.1);
-    color: #222222;
-    font-size: 16px;
-    gap: 16px;
-}
-.alert-success svg {
-    color: #2ECC71;
-    width: 28px;
-    height: 28px;
-    flex-shrink: 0;
-}
-
-/* Help Icons */
-.help svg {
-    color: #048FE6;
-    transform: translateY(3px);
-    aspect-ratio: 1/1;
-    width: 16px;
-}
-
-/* Decorative Elements */
-.rectangle {
-    display: none;
 }
 
 @media(max-width: 480px) {

@@ -1,4 +1,5 @@
 {% load static %}
+{% load widget_tweaks %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,22 +7,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SeaSight | Map</title>
 
-    <!--MAPLIBRE-->
     <link href='https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.css' rel='stylesheet' />
     <script src='https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.js'></script>
     <link rel="stylesheet" href="https://unpkg.com/@maplibre/maplibre-gl-controls@1.3.0/dist/maplibre-gl-controls.min.css" />
     <script src="https://unpkg.com/@maplibre/maplibre-gl-controls@1.3.0/dist/maplibre-gl-controls.umd.js"></script>
 
-    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
     
-    <!--Bootstrap Icons-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <link rel="stylesheet" href="{% static 'modals.css' %}">
+    <link rel="stylesheet" href="{% static 'auth.css' %}">
 
-    <!--Favicon-->
     <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.png' %}">
 </head>
 
@@ -62,6 +59,122 @@
 </style>
 
 <body>
+    
+    <div class="modal" id="add-beach-modal">
+        <p>This is a add modal!</p>
+        <form method="post" id="add-beach-form" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <input type="hidden" name="form_type" value="add_beach">
+            <input type="hidden" name="latitude" id="id_latitude" value="" required> 
+            <input type="hidden" name="longitude" id="id_longitude" value="" required>
+
+            {% for message in messages %}
+                {% endfor %}
+            
+            {% for field in beach_add_form.visible_fields %}
+                {% if field.name != 'latitude' and field.name != 'longitude' %}
+                    <div class="input-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        
+                        {% if field.errors %}
+                            {{ field|add_class:"input-error" }}
+                            {% for error in field.errors %}
+                                <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        {% else %}
+                            
+                            {% if field.field.widget.input_type == 'password' %}
+                                
+                                <div class="password-wrapper"> 
+                                    {{ field }} <i class="bi bi-eye-fill toggle-btn" id="toggle"></i>
+                                </div>
+                                
+                            {% else %}
+                                {{ field }} 
+                            {% endif %}
+                            
+                        {% endif %}
+
+                        {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+            
+            <button class="btn-primary" type="submit" aria-label="Регистрай">
+                Регистрай
+                </button>
+        </form>
+        <button type="button" id="close-add-beach-modal" onclick="closeAddModal()">X</button>
+    </div>
+
+    <div class="modal" id="log-beach-modal">
+        <p>This is a log modal!</p>
+        <form method="post" id="logs-form" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <input type="hidden" name="form_type" value="log_beach">
+            <input type="hidden" name="beach_id" value="{{ beach.id }}">
+            <input type="hidden" name="latitude" id="id_latitude">
+            <input type="hidden" name="longitude" id="id_longitude">
+
+            {% for message in messages %}
+                <div class="alert-{{message.tags}}">
+                    
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-octagon" viewBox="0 0 16 16">
+                        <path d="M4.54.146A.5.5 0 0 1 4.893 0h6.214a.5.5 0 0 1 .353.146l4.394 4.394a.5.5 0 0 1 .146.353v6.214a.5.5 0 0 1-.146.353l-4.394 4.394a.5.5 0 0 1-.353.146H4.893a.5.5 0 0 1-.353-.146L.146 11.46A.5.5 0 0 1 0 11.107V4.893a.5.5 0 0 1 .146-.353zM5.1 1 1 5.1v5.8L5.1 15h5.8l4.1-4.1V5.1L10.9 1z"/>
+                        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+                    </svg>
+
+                    {{message}}
+
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg alert-close" viewBox="0 0 16 16">
+                        <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                    </svg>
+                </div>
+            {% endfor %}
+            
+            {% for field in beach_log_form %}
+                <div class="input-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    
+                    {% if field.errors %}
+                        {{ field|add_class:"input-error" }}
+                        {% for error in field.errors %}
+                            <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    {% else %}
+                        
+                        {% if field.field.widget.input_type == 'password' %}
+                            
+                            <div class="password-wrapper"> 
+                                {{ field }} <i class="bi bi-eye-fill toggle-btn" id="toggle"></i>
+                            </div>
+                            
+                        {% else %}
+                            {{ field }} 
+                        {% endif %}
+                        
+                    {% endif %}
+
+                    {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            
+            <button class="btn-primary" type="submit" aria-label="Влизане">
+                Регистрай
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/>
+                </svg>
+            </button>
+        </form>
+        <button type="button" id="close-log-beach-modal" onclick="closeLogsModal()">X</button>
+    </div>
+
     <button class="btn btn-primary rounded-circle shadow position-fixed top-50 start-0 translate-middle-y d-flex align-items-center justify-content-center" 
             style="width:45px; height:45px; margin-left:5px; z-index:1050;" 
             type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" aria-controls="sideMenu">
@@ -95,17 +208,13 @@
         </div>
     </div>
 
-    <!-- Map -->
-    <div id="map" data-beach-add-url="{% url 'beach_add' %}"></div>
+    <div id="map"></div>
 
-    <!-- Right Sidebar -->
     <div class="col-lg-4 col-12 border-start d-flex flex-column h-100 p-4 bg-light shadow-sm">
-        <!-- Sidebar Header -->
         <div class="mb-4 d-flex align-items-center justify-content-between">
             <h2 class="fw-bold text-primary m-0">SeaSight</h2>
         </div>
 
-        <!-- Messages at the top -->
         {% if messages %}
         <div class="mb-3">
             {% for message in messages %}
@@ -117,14 +226,12 @@
         </div>
         {% endif %}
 
-        <!-- Sidebar Content -->
-        <div class="flex-grow-1 overflow-auto">
+        <div class="flex-grow-1 overflow-auto" id="sidebar">
             <h3 class="fs-6 fw-semibold text-secondary d-flex align-items-center mb-3">
                 <i class="bi bi-geo-alt-fill me-2 text-primary"></i> Информация за плажове
             </h3>
             <p class="text-muted small mb-3">Натиснете върху плаж, за да разгледате детайли</p>
 
-            <!-- Beach List -->
             <div class="list-group list-group-flush">
                 {% for beach in beaches %}
                 <a href="#" class="list-group-item list-group-item-action d-flex flex-column rounded mb-3 shadow-sm p-3 bg-white">
@@ -134,7 +241,6 @@
                     </div>
                     <p class="text-muted small mb-2">{{ beach.description }}</p>
 
-                    <!-- Beach Features -->
                     <div class="d-flex flex-wrap gap-2">
                         {% if beach.has_lifeguard %}
                             <span class="badge bg-primary"><i class="bi bi-shield-fill-check me-1"></i>Lifeguard</span>
@@ -171,35 +277,34 @@
     <span id="user_lng" class="d-none">{{ user_lng }}</span>
     {{ beaches|json_script:"beaches_json"}}
 
-    </div>
-
-    <!-- BOOTSTRAP JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 
     <script>
         const JAWG_ACCESS_TOKEN = '{{ jawg_token }}'; 
 
+        const latInput = document.getElementById('id_latitude');
+        const lngInput = document.getElementById('id_longitude');
+
+
         const USER_LAT = parseFloat(document.getElementById('user_lat').textContent);
         const USER_LNG = parseFloat(document.getElementById('user_lng').textContent);
         const BEACHES_DATA = JSON.parse(document.getElementById('beaches_json').textContent);
-        
+
         const REPORT_URL_BASE = "{% url 'report_beach' '00000000-0000-0000-0000-000000000000' %}";
-        const LOG_URL_BASE = "{% url 'log_beach' '00000000-0000-0000-0000-000000000000' %}";
+        //{# const LOG_URL_BASE = "{% url 'log_beach' '00000000-0000-0000-0000-000000000000' %}"; #}
         const LOG_SPEC_URL_BASE = "{% url 'log_beach_spec' '00000000-0000-0000-0000-000000000000' %}";
-        const ADD_BEACH_URL_BASE = "{% url 'beach_add' %}"; 
-        
-        const displayValue = val => val === null ? "Няма информация" : val;
+        //{# const ADD_BEACH_URL_BASE = "{% url 'beach_add' %}"; #}
+
+        const displayValue = val => val === null ? "Njama informacija" : val;
 
         const map = new maplibregl.Map({
             container: 'map',
-            style: `https://api.jawg.io/styles/jawg-lagoon.json?access-token=${JAWG_ACCESS_TOKEN}`,
+            style: 'https://api.jawg.io/styles/jawg-lagoon.json?access-token=' + JAWG_ACCESS_TOKEN,
             zoom: 14,
             center: [USER_LNG, USER_LAT]
         });
 
-        map.addControl(new maplibregl.AttributionControl({ 
-            compact: true 
-        }));
+        map.addControl(new maplibregl.AttributionControl({ compact: true }));
 
         maplibregl.setRTLTextPlugin(
             'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js'
@@ -207,108 +312,156 @@
 
         map.on('load', function() {
             let userMarker = null;
+            const existingMarkers = [];
+            const beachMarkers = [];
+            const MIN_MARKER_ZOOM = 10;
 
             const createMapLibreMarker = (coordinates) => {
-                return new maplibregl.Marker()
-                    .setLngLat(coordinates)
-                    .addTo(map);
+                return new maplibregl.Marker().setLngLat(coordinates).addTo(map);
             };
 
-            map.on('click', (e) => {
-                if (userMarker) {
-                    userMarker.remove();
-                }
-                
-                const coordinates = [e.lngLat.lng, e.lngLat.lat]; 
-                userMarker = createMapLibreMarker(coordinates);
+            function getDistance(lat1, lng1, lat2, lng2) {
+                const R = 6371000;
+                const toRad = (v) => (v * Math.PI) / 180;
+                const dLat = toRad(lat2 - lat1);
+                const dLng = toRad(lng2 - lng1);
+                const a =
+                    Math.sin(dLat / 2) ** 2 +
+                    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                    Math.sin(dLng / 2) ** 2;
+                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            }
 
-                const addBeachUrl = `${ADD_BEACH_URL_BASE}?lat=${e.lngLat.lat}&lng=${e.lngLat.lng}`; 
-
-                const popupContent = `
-                    <div class="p-2">
-                        <p class="fs-5 fw-semibold text-primary mb-2 mt-0">Маркер</p>
-                        <p class="mb-2">
-                            Координати: ${e.lngLat.lat.toFixed(5)}, ${e.lngLat.lng.toFixed(5)}
-                        </p>
-                        <a href="${addBeachUrl}" class="link-primary link-underline-primary">
-                            Добави като плаж <i class="bi bi-plus-circle"></i>
-                        </a>
-                    </div>
-                `;
-                
-                userMarker.setPopup(new maplibregl.Popup()
-                    .setHTML(popupContent))
-                .togglePopup();
-            });
-            
             BEACHES_DATA.forEach(beach => {
                 const coordinates = [beach.longitude, beach.latitude];
-                
                 const marker = createMapLibreMarker(coordinates);
 
-                marker.getElement().addEventListener('click', function() {
-                    fetch(`/beach/${beach.id}/`)
+                existingMarkers.push({ marker, coordinates, id: beach.id });
+                beachMarkers.push(marker);
+
+                marker.getElement().addEventListener('click', function(e) {
+                    if (map.getZoom() < MIN_MARKER_ZOOM) return;
+                    e.stopPropagation();
+
+                    fetch('/beach/' + beach.id + '/')
                         .then(response => {
-                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            if (!response.ok) throw new Error('HTTP error! status: ' + response.status);
                             return response.json();
                         })
                         .then(data => {
                             const beachPopup = new maplibregl.Popup({ offset: 25 })
                                 .setLngLat(coordinates)
-                                .setHTML(`<b>${displayValue(data.name)}</b>`);
-                            
+                                .setHTML('<b>' + displayValue(data.name) + '</b>');
                             marker.setPopup(beachPopup).togglePopup();
 
                             const sidebar = document.getElementById("sidebar");
                             if (!sidebar) return;
 
-                            sidebar.innerHTML = `
-                                <h2>${displayValue(data.name)}</h2>
-                                <p>${displayValue(data.description)}</p>
-                                <p>Доклади днес: ${displayValue(data.times_logged)}</p>
-                                <p>Платена зона: ${displayValue(data.has_paid_zone)}</p>
-                                <p>Паркинг: ${displayValue(data.has_parking)}</p>
-                                <p>Платен паркинг: ${displayValue(data.has_paid_parking)}</p>
-                                <p>Заведения: ${displayValue(data.has_beach_bar)}</p>
-                                <p>Съблекални: ${displayValue(data.has_changing_rooms)}</p>
-                                <p>Тоалетни: ${displayValue(data.has_toilets)}</p>
+                            sidebar.innerHTML = 
+                            '<h2>' + displayValue(data.name) + '</h2>' +
+                            '<p>' + displayValue(data.description) + '</p>' +
+                            '<p>Dokladi dnes: ' + displayValue(data.times_logged) + '</p>' +
+                            '<p>Platena zona: ' + displayValue(data.has_paid_zone) + '</p>' +
+                            '<p>Parking: ' + displayValue(data.has_parking) + '</p>' +
+                            '<p>Platen parking: ' + displayValue(data.has_paid_parking) + '</p>' +
+                            '<p>Zavedenia: ' + displayValue(data.has_beach_bar) + '</p>' +
+                            '<p>Sablekalni: ' + displayValue(data.has_changing_rooms) + '</p>' +
+                            '<p>Toaletni: ' + displayValue(data.has_toilets) + '</p>' +
 
-                                <a id="report-link" class="btn btn-danger mt-3" href="${REPORT_URL_BASE.replace('00000000-0000-0000-0000-000000000000', data.pk)}">
-                                    Докладвайте проблем с този плаж
-                                </a>
+                            '<a id="report-link" class="btn btn-danger mt-3" href="' + REPORT_URL_BASE.replace('00000000-0000-0000-0000-000000000000', data.pk) + '">' +
+                            'Dokladovaite problem s tozi plaj' +
+                            '</a>' +
 
-                                <h3 class="mt-5">Условията днес: </h3>
-                                <p>Честота на водата: ${displayValue(data.clarity_avr)}</p>
-                                <p>Количество хора: ${displayValue(data.crowd_avr)}</p>
-                                <p>Време: ${displayValue(data.weather_avr)}</p>
-                                <p>Усещане на водата: ${displayValue(data.water_temp_avr)}</p>
-                                <p>Водорасли: ${displayValue(data.algae_avr)}</p>
-                                <p>Количество деца: ${displayValue(data.kids_avr)}</p>
-                                <p>Вълни: ${displayValue(data.waves)}</p>
-                                <p>Място за паркиране: ${displayValue(data.parking_space)}</p>
+                            '<h3 class="mt-5">Uslovijata dnes:</h3>' +
+                            '<p>Chesto ta na vodata: ' + displayValue(data.clarity_avr) + '</p>' +
+                            '<p>Kolichestvo hora: ' + displayValue(data.crowd_avr) + '</p>' +
+                            '<p>Vreme: ' + displayValue(data.weather_avr) + '</p>' +
+                            '<p>Useshtane na vodata: ' + displayValue(data.water_temp_avr) + '</p>' +
+                            '<p>Vodorasli: ' + displayValue(data.algae_avr) + '</p>' +
+                            '<p>Kolichestvo deca: ' + displayValue(data.kids_avr) + '</p>' +
+                            '<p>Valni: ' + displayValue(data.waves) + '</p>' +
+                            '<p>Mjasto za parkirane: ' + displayValue(data.parking_space) + '</p>' +
 
-                                <a id="log-link" class="btn btn-primary" href="${LOG_URL_BASE.replace('00000000-0000-0000-0000-000000000000', data.pk)}">
-                                    Докладвайте данни за този плаж
-                                </a>
-                                <a id="spec-log-link"
-                                    class="btn btn-success mt-3"
-                                    href="${LOG_SPEC_URL_BASE.replace('00000000-0000-0000-0000-000000000000', data.pk)}">
-                                        Доклади за днес
-                                </a>
-                            `;
+                            '<a id="log-link" class="btn btn-primary" data.pk)" id="open-logs-modal" onclick="openLogsModal()">' +
+                            'Dokladovaite danni za tozi plaj' +
+                            '</a>' +
+                            '<a id="spec-log-link"' +
+                            'class="btn btn-success mt-3"' +
+                            'href="' + LOG_SPEC_URL_BASE.replace('00000000-0000-0000-0000-000000000000', data.pk) + '">' +
+                            'Dokladi za dnes' +
+                            '</a>';
                         })
                         .catch(error => {
                             console.error('Fetch error:', error);
                             const errorPopup = new maplibregl.Popup({ offset: 25 })
                                 .setLngLat(coordinates)
-                                .setHTML('Възникна грешка!');
-                            
+                                .setHTML('Vaznikna greshka!');
                             marker.setPopup(errorPopup).togglePopup();
                         });
                 });
             });
+            // href="${LOG_URL_BASE.replace('00000000-0000-0000-0000-000000000000',
+
+            function updateMarkerVisibility() {
+                const zoom = map.getZoom();
+                beachMarkers.forEach(marker => {
+                    marker.getElement().style.display = (zoom >= MIN_MARKER_ZOOM) ? "block" : "none";
+                });
+            }
+
+            updateMarkerVisibility();
+            map.on('zoom', updateMarkerVisibility);
+
+            map.on('click', (e) => {
+                const newLat = e.lngLat.lat;
+                const newLng = e.lngLat.lng;
+
+                const tooClose = existingMarkers.some(({ coordinates }) => {
+                    return getDistance(
+                        newLat, newLng,
+                        coordinates[1], coordinates[0]
+                    ) < 30;
+                });
+                if (tooClose) return;
+
+                if (userMarker) userMarker.remove();
+                
+                const coordinates = [newLng, newLat];
+                userMarker = createMapLibreMarker(coordinates);
+
+                if (latInput && lngInput) {
+                    latInput.value = newLat.toFixed(6);
+                    lngInput.value = newLng.toFixed(6);
+                } else {
+                    console.error('Hidden input fields for latitude or longitude not found (expected IDs: id_latitude, id_longitude).');
+                }
+
+                const popupContent = document.createElement('div');
+                popupContent.className = 'p-2';
+                popupContent.innerHTML = 
+                    '<p class="fs-5 fw-semibold text-primary mb-2 mt-0">Marker</p>' +
+                    '<p class="mb-2">' +
+                    'Koordinati: ' + newLat.toFixed(5) + ', ' + newLng.toFixed(5) +
+                    '</p>' +
+                    '<a href="#" class="add-beach-link link-primary link-underline-primary">' +
+                    'Dobavi kato plaj <i class="bi bi-plus-circle"></i>' +
+                    '</a>';
+
+                popupContent.querySelector('.add-beach-link').addEventListener('click', (evt) => {
+                    evt.preventDefault();
+                    openAddModal();
+                });
+
+                userMarker.setPopup(new maplibregl.Popup().setDOMContent(popupContent)).togglePopup();
+
+                beachMarkers.push(userMarker);
+                updateMarkerVisibility();
+            });
         });
     </script>
+
+    <script src="{% static 'js/mapModals.js' %}"></script>
+    <script src="{% static 'js/closeAlert.js' %}"></script>
 
 </body>
 </html>

@@ -32,7 +32,7 @@ class UserProfile(models.Model):
     #* SETTINGS & PREFERNCES
     theme = models.CharField(null=True, blank=True, default="light")
     send_notifs = models.BooleanField(null=True, blank=True, default="True")
-    language = models.CharField(choices=LANGUAGE_CHOICES)
+    language = models.CharField(choices=LANGUAGE_CHOICES, default="bg")
     
     def __str__(self):
         return self.user.username

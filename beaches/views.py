@@ -3,6 +3,7 @@ from datetime import date
 import os
 
 # Django imports
+from django.http import HttpResponse
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash, get_user_model
 from django.contrib.auth.decorators import user_passes_test, login_required
@@ -343,19 +344,99 @@ def map_view(request):
 
     beaches = models.Beach.objects.filter(has_been_approved=True)
 
+    beach_add_form = forms.BeachAddForm()
+    beach_log_form = forms.LogBeachForm()
+
+    if request.method == "POST":
+        form_type = request.POST.get("form_type")
+
+        if form_type == "add_beach":
+            print("Add progress!")
+            beach_add_form = forms.BeachAddForm(request.POST, request.FILES)
+            if beach_add_form.is_valid():
+                added_beach = models.Beach.objects.create(
+                    name=beach_add_form.cleaned_data['name'],
+                    description=beach_add_form.cleaned_data['description'],
+                    has_lifeguard=beach_add_form.cleaned_data['has_lifeguard'],
+                    has_parking=beach_add_form.cleaned_data['has_parking'],
+                    has_paid_parking=beach_add_form.cleaned_data['has_paid_parking'],
+                    has_toilets=beach_add_form.cleaned_data['has_toilets'],
+                    has_changing_rooms=beach_add_form.cleaned_data['has_changing_rooms'],
+                    has_paid_zone=beach_add_form.cleaned_data['has_paid_zone'],
+                    has_beach_bar=beach_add_form.cleaned_data['has_beach_bar'],
+                    latitude=beach_add_form.cleaned_data['latitude'],
+                    longitude=beach_add_form.cleaned_data['longitude'],
+                )
+                models.BeachImage.objects.create(
+                    beach=added_beach,
+                    title=added_beach.name,
+                    user=user,
+                    image=beach_add_form.cleaned_data['image']
+                )
+                messages.success(
+                    request,
+                    "Добавихте плаж успешно. Изчаква одобрение от администратор."
+                )
+                return redirect("map")
+            else:
+                print('mazna, ne ti raboti forma')
+                print(beach_add_form.errors)
+
+        elif form_type == "log_beach":
+            print("Log progress")
+            beach_log_form = forms.LogBeachForm(request.POST, request.FILES)
+            if beach_log_form.is_valid():
+                beach_id = request.POST.get("beach_id")
+                beach = get_object_or_404(models.Beach, id=beach_id)
+                image_file = beach_log_form.cleaned_data.get('image')
+
+                if image_file:
+                    beach_image_instance = models.BeachImage.objects.create(
+                        beach=beach,
+                        user=user,
+                        title=image_file.name,
+                        image=image_file
+                    )
+                else:
+                    beach_image_instance = None
+
+                models.BeachLog.objects.create(
+                    beach=beach,
+                    user=user,
+                    image=beach_image_instance,
+                    crowd_level=beach_log_form.cleaned_data['crowd_level'],
+                    water_clarity=beach_log_form.cleaned_data['water_clarity'],
+                    water_temp=beach_log_form.cleaned_data['water_temp'],
+                    weather=beach_log_form.cleaned_data['weather'],
+                    algae=beach_log_form.cleaned_data['algae'],
+                    parking_space=beach_log_form.cleaned_data['parking_space'],
+                    waves=beach_log_form.cleaned_data['waves'],
+                    note=beach_log_form.cleaned_data['note']
+                )
+                profile = models.UserProfile.objects.get(user=user)
+                profile.xp += 100
+                profile.save()
+                messages.info(request, '+100 XP точки!')
+                return redirect("map")
+            else:
+                print('mazna ne ti raboti form-a')
+                print(beach_log_form.errors)
+
     context = {
         "beaches": list(beaches.values("id", "latitude", "longitude")),
         "user_lat": user_lat,
         "user_lng": user_lng,
-        "jawg_token": jawg_token
+        "jawg_token": jawg_token,
+        "beach_add_form": beach_add_form,
+        "beach_log_form": beach_log_form
     }
+
     return render(request, "app/map.html", context)
 
 def beach_data(request, beach_id):
-    
-    
+    today_dt = date.today()
     beach = models.Beach.objects.get(id=beach_id)
-
+    
     today_logs = models.BeachLog.objects.filter(beach=beach, date__date=today_dt)
     logs_count = today_logs.count()
 
@@ -372,74 +453,31 @@ def beach_data(request, beach_id):
         "has_toilets": beach.has_toilets,
         "has_changing_rooms": beach.has_changing_rooms,
         "times_logged": logs_count,
-        "clarity_avr": None,
-        "crowd_avr": None,
-        "water_temp_avr": None,
-        "weather_avr": None,
-        "algae_avr": None,
-        "kids_avr": None,
-        "waves": None,
-        "parking_space": None,
     }
 
     if logs_count:
-        fields = [
-            "crowd_level", "water_clarity", "water_temp", "weather",
-            "algae", "kids", "waves", "parking_space"
-        ]
-        for field in fields:
-            value = (
-                models.BeachLog.objects.filter(beach=beach)
-                .values(field).annotate(count=Count(field))
-                .order_by("-count").first()
-            )
-            response[field if field != "water_clarity" else "clarity_avr"] = (
-                value[field] if value else None
-            ) if field not in ["crowd_level", "water_temp", "weather",
-                                "algae", "kids", "waves", "parking_space"] else (
-                value[field] if value else None
-            )
+        fields_map = {
+            "crowd_level": "crowd_avr",
+            "water_clarity": "clarity_avr",
+            "water_temp": "water_temp_avr",
+            "weather": "weather_avr",
+            "algae": "algae_avr",
+            "kids": "kids_avr",
+            "waves": "waves",
+            "parking_space": "parking_space"
+        }
 
+        for field, key in fields_map.items():
+            most_common = (
+                today_logs
+                .values(field)
+                .annotate(count=Count(field))
+                .order_by('-count')
+                .first()
+            )
+            response[key] = most_common[field] if most_common else "Няма информация"
 
     return JsonResponse(response)
-
-@login_required
-def beach_add(request):
-    lat = request.GET.get("lat")
-    lng = request.GET.get("lng")
-    user = request.user
-
-    if request.method == "POST":
-        form = forms.BeachAddForm(request.POST, request.FILES)
-        if form.is_valid():
-            added_beach = models.Beach.objects.create(
-                name=form.cleaned_data['name'],
-                description=form.cleaned_data['description'],
-                has_lifeguard=form.cleaned_data['has_lifeguard'],
-                has_parking=form.cleaned_data['has_parking'],
-                has_paid_parking=form.cleaned_data['has_paid_parking'],
-                has_toilets=form.cleaned_data['has_toilets'],
-                has_changing_rooms=form.cleaned_data['has_changing_rooms'],
-                has_paid_zone=form.cleaned_data['has_paid_zone'],
-                has_beach_bar=form.cleaned_data['has_beach_bar'],
-                latitude=form.cleaned_data['latitude'],
-                longitude=form.cleaned_data['longitude'],
-            )
-            models.BeachImage.objects.create(
-                beach = added_beach,
-                title = added_beach.name,
-                user = user,
-                image = form.cleaned_data['image']
-            )
-            messages.success(
-                request,
-                "Добавихте плаж успешно. Изчаква одобрение от администратор."
-            )
-            return redirect("map")
-    else:
-        form = forms.BeachAddForm(initial={"latitude": lat, "longitude": lng})
-
-    return render(request, "app/beaches/beach_add.html", {"form": form})
 
 @login_required
 def favourite_beaches(request):
@@ -453,7 +491,7 @@ def favourite_beaches(request):
 @user_passes_test(is_moderator)
 @login_required
 def dashboard_mod(request):
-    pending_beaches = models.Beach.objects.filter(has_been_approved=False)
+    pending_beaches = models.Beach.objects.filter(has_been_approved=False).prefetch_related('beachimage_set')
     reports = models.BeachReport.objects.filter(resolved = False)
     context = {
         'pending': pending_beaches,
@@ -468,6 +506,14 @@ def mark_as_approved(request, beach_id):
     beach.has_been_approved = True
     beach.approved_date = timezone.now()
     beach.save()
+    return redirect('dashboard_mod')
+    
+@user_passes_test(is_moderator)
+@login_required
+def delete_beach(request, beach_id):
+    beach = get_object_or_404(models.Beach, id = beach_id)
+    beach.delete()
+    return redirect('dashboard_mod')
     
 #* ====== BEACH REPORTING ===== *#
 @login_required
@@ -523,62 +569,6 @@ def report_delete(request, report_id):
     return redirect("moderation_dashboard")
 
 #* ====== BEACH LOGGING ===== *#
-
-@login_required
-def log_beach(request, beach_id):
-    if request.method == "POST":
-        form = forms.LogBeachForm(request.POST, request.FILES)
-        user = request.user
-        beach = get_object_or_404(models.Beach, id = beach_id)
-        
-        if form.is_valid():
-            image_file = form.cleaned_data['image']
-            
-            crowd_level = form.cleaned_data['crowd_level']
-            water_clarity = form.cleaned_data['water_clarity']
-            water_temp = form.cleaned_data['water_temp']
-            weather = form.cleaned_data['weather']
-            algae = form.cleaned_data['algae']
-            parking_space = form.cleaned_data['parking_space']
-            waves = form.cleaned_data['waves']
-            note = form.cleaned_data['note']
-            
-            if image_file:
-                beach_image_instance = models.BeachImage.objects.create(
-                    beach=beach,
-                    user=request.user,
-                    title=image_file.name,
-                    image=image_file,
-                )
-            
-            try:
-                models.BeachLog.objects.create(
-                    beach = beach,
-                    user = user,
-                    image = beach_image_instance,
-                    crowd_level = crowd_level,
-                    water_clarity = water_clarity,
-                    water_temp = water_temp,
-                    weather = weather,
-                    algae = algae,
-                    parking_space = parking_space,
-                    waves = waves,
-                    note = note
-                )
-                profile = models.UserProfile.objects.get(user=user)
-                profile.xp += 100
-                profile.save()
-                
-                messages.info(request, '+100 XP точки!')
-                return redirect('map')
-            except Exception as e:
-                print(f"Error while submitting Beach Log: {e}")
-                messages.error(request, 'Възникна грешка! Моля опитайте отново!')
-                return render(request, 'app/logs/log_add.html', {'form': form})
-    else:
-        form = forms.LogBeachForm()
-    return render(request, 'app/logs/log_add.html', {'form': form})
-
 @login_required
 def view_logs_spec(request, beach_id):
     beach = get_object_or_404(models.Beach, pk=beach_id)
@@ -602,6 +592,9 @@ def view_my_logs(request):
 #* ===== MISC VIEWS ===== *#
 def redirect_from_empty_link(request):
     return redirect('dashboard')
+
+def terms(request):
+    return render(request, 'terms.html')
 
 @login_required
 def app_settings(request):
@@ -636,3 +629,14 @@ def app_settings(request):
         })
 
     return render(request, 'settings.html', {'form': form})
+
+@login_required
+def add_favourite(request, beach_id):
+    if not request.user.is_authenticated:
+        return HttpResponse("Unauthorized", status=401) 
+
+    user = request.user
+    beach = get_object_or_404(models.Beach, id=beach_id)
+    beach.favourites.add(user)
+    
+    return HttpResponse(status=204)
