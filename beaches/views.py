@@ -346,6 +346,7 @@ def map_view(request):
 
     beach_add_form = forms.BeachAddForm()
     beach_log_form = forms.LogBeachForm()
+    beach_report_form = forms.ReportBeachForm()
 
     if request.method == "POST":
         form_type = request.POST.get("form_type")
@@ -428,7 +429,8 @@ def map_view(request):
         "user_lng": user_lng,
         "jawg_token": jawg_token,
         "beach_add_form": beach_add_form,
-        "beach_log_form": beach_log_form
+        "beach_log_form": beach_log_form,
+        "beach_report_form": beach_report_form
     }
 
     return render(request, "app/map.html", context)

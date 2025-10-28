@@ -103,7 +103,6 @@ class BeachEditForm(forms.ModelForm):
         required=False
     )
 
-#* ===== BEACH REPORTING ===== *#
 class ReportBeachForm(forms.Form):
     REPORT_CHOICES = models.BeachReport.REPORT_CATEGORIES
     title = forms.CharField(max_length=60, required=True, label="Заглавие на доклада: ")
@@ -120,7 +119,6 @@ class ReportBeachForm(forms.Form):
         widget=forms.Textarea(attrs={'rows': 2, 'style': 'max-height: 500px;'})
     )
 
-#* ===== BEACH LOGGING ===== *#
 class LogBeachForm(forms.Form):
     image = forms.ImageField(required=True, label="Снимка")
     
