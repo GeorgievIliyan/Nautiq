@@ -9,7 +9,7 @@ django.setup()
 from beaches.models import BeachReport
 
 def delete_old_reports():
-    cutoff = timezone.now() - timedelta(weeks=2)
+    cutoff = timezone.now() - timedelta(days=3)
     deleted_count, _ = BeachReport.objects.filter(resolved=True, date__lt=cutoff).delete()
     print(f"Deleted {deleted_count} old resolved reports")
 

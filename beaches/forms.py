@@ -191,5 +191,6 @@ class SettingsForm(forms.Form):
         widget=forms.RadioSelect(attrs={'class': 'theme-radio'})
     )
     
+    theme = forms.ChoiceField(choices=THEME_CHOICES)
     notifs = forms.CheckboxInput()
     lang = forms.ChoiceField(choices=LANGUAGE_CHOICES)

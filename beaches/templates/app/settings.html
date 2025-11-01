@@ -1,4 +1,5 @@
 {% load static %}
+{% load widget_tweaks %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +10,46 @@
     <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.png' %}">
 </head>
 <body>
-    <form action=""></form>
+    {% for key, value in settings.items %}
+        <p>{{ key }}: {{ value }}</p>
+    {% endfor %}
+
+    <button type="button" onclick="openSettingsForm()">Редактирай</button>
+
+    
+
+    <form method="post" id="settings-form">
+        {% csrf_token %}
+
+        <input type="hidden" name="form_type" value="report_beach">
+
+        {% for hidden in form.hidden_fields %}
+            {{ hidden }}
+        {% endfor %}
+
+        {% for field in form %}
+            {% if field.field.widget.input_type != 'checkbox' and field.field.widget.input_type != 'radio' and field.field.widget.input_type != 'checkbox multiple' and field.field.widget.input_type != 'radio select' %}
+                <div class="modal-input-group">
+                    {{ field.label_tag }} 
+                    {% if field.name == 'category' %}
+                        {{ field|add_class:"form-select" }}
+                    {% else %}
+                        {{ field|add_class:"form-control" }}
+                    {% endif %}
+                    {% for error in field.errors %}<p class="error-message">{{ error }}</p>{% endfor %}
+                </div>
+            {% endif %}
+        {% endfor %}
+                
+        <button type="submit" class="btn-primary-sm">
+            Подай Сигнал
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/>
+            </svg>
+        </button>
+        <button type="button" id="close-settings-form" onclick="closeSettingsForm()">Затвори</button>
+    </form>
+
+    <script src="{% static 'js/settingsForm.js' %}"></script>
 </body>
 </html>

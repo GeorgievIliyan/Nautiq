@@ -352,7 +352,6 @@ def map_view(request):
         form_type = request.POST.get("form_type")
 
         if form_type == "add_beach":
-            print("Add progress!")
             beach_add_form = forms.BeachAddForm(request.POST, request.FILES)
             if beach_add_form.is_valid():
                 added_beach = models.Beach.objects.create(
@@ -380,11 +379,10 @@ def map_view(request):
                 )
                 return redirect("map")
             else:
-                print('mazna, ne ti raboti forma')
+                print('Error with add beach form: ')
                 print(beach_add_form.errors)
 
         elif form_type == "log_beach":
-            print("Log progress")
             beach_log_form = forms.LogBeachForm(request.POST, request.FILES)
             if beach_log_form.is_valid():
                 beach_id = request.POST.get("beach_id")
@@ -420,9 +418,27 @@ def map_view(request):
                 messages.info(request, '+100 XP точки!')
                 return redirect("map")
             else:
-                print('mazna ne ti raboti form-a')
+                print('Error with log-beach form:')
                 print(beach_log_form.errors)
 
+        elif form_type == 'report_beach':
+            beach = get_object_or_404(models.Beach, id=beach_id)
+            report_beach_form = forms.ReportBeachForm(request.POST, request.FILES)
+            if report_beach_form.is_valid():
+                submitted_by = request.user
+                title = beach_report_form.cleaned_data['title']
+                description = beach_report_form.cleaned_data['description']
+                category = beach_report_form.cleaned_data['category']
+                
+                try:
+                    models.BeachReport.objects.create(submitted_by = submitted_by, title = title, description = description, category = category)
+                except Exception as err:
+                    print("Error while trying to create a beach report instance: " + err)
+            else:
+                print("Error in report beach form: ")
+                print(report_beach_form.errors)
+        else:
+            print("An error has occured: unknown form type!")
     context = {
         "beaches": list(beaches.values("id", "latitude", "longitude")),
         "user_lat": user_lat,
@@ -600,10 +616,8 @@ def terms(request):
 
 @login_required
 def app_settings(request):
-    user = request.user
-
     try:
-        user_profile = models.UserProfile.objects.get(user=user)
+        user_profile = models.UserProfile.objects.get(user=request.user)
     except models.UserProfile.DoesNotExist:
         messages.error(request, 'Профилът ви не беше намерен.')
         return redirect('home')
@@ -629,8 +643,13 @@ def app_settings(request):
             'notifs': user_profile.send_notifs,
             'lang': user_profile.language,
         })
+        settings = {
+            'theme': user_profile.theme,
+            'notifs': user_profile.send_notifs,
+            'lang': user_profile.language
+        }
 
-    return render(request, 'settings.html', {'form': form})
+    return render(request, 'app/settings.html', {'form': form, 'settings': settings})
 
 @login_required
 def add_favourite(request, beach_id):

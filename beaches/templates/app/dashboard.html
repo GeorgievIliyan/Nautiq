@@ -11,19 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 </head>
 <body>
-    <sea-sight-sidebar
-        data-username="{{ user.username }}"
-        data-level="Level 10"
-        data-pfp="{{ user.profile_image.url }}"
-        dashboard-url="{% url 'dashboard' %}"
-        map-url="{% url 'map' %}"
-        logs-url="{% url 'my_logs' %}"
-        account-url="{% url 'account' %}"
-        logout-url="{% url 'logout' %}"
-        settings-url="{% url 'settings' %}"
-        terms-url="{% url 'terms' %}">
-    </sea-sight-sidebar>
+    {% include 'app/components/navbar.html' %}
 </body>
 <script src="{% static 'js/closeAlert.js' %}"></script>
-<script src="{% static 'js/sideBar.js' %}?v=2" defer></script>
 </html>
