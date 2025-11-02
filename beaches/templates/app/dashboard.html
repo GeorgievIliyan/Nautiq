@@ -1,4 +1,5 @@
 {% load static %}
+{% load widget_tweaks %}=
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,9 +10,152 @@
     <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.png' %}">
     <!--Bootstrap Icons-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <!--CSS-->
+    <link rel="stylesheet" href="{%  %}">
 </head>
 <body>
+    <!--Navigation bar-->
     {% include 'app/components/navbar.html' %}
+    <div class="dashboard-top">
+        <div class="content">
+            <h1><span class="regular">Здравей,</span> Иван!</h1>
+            <span>Пътешественик - ниво 10</span>
+        </div>
+    </div>
+
+    <div class="dashboard-wrapper">
+        <div class="leaderboard">
+            <h2>Класация</h2>
+            <div class="leaderboard-top">
+                
+                <div class="leaderboard-top-box">
+                    <div class="medal medal-gold">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <p>Джон Дое</p>
+                    <span class="top-points">271k</span>
+                </div>
+                
+                <div class="leaderboard-top-box">
+                    <div class="medal medal-silver">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <p>Джон Дое</p>
+                    <span class="top-points">271k</span>
+                </div>
+                
+                <div class="leaderboard-top-box">
+                    <div class="medal medal-bronze">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <p>Джон Дое</p>
+                    <span class="top-points">271k</span>
+                </div>
+            </div>
+
+            <h3>Пълна класация</h3>
+            <div class="full-leaderboard">
+                <div class="leaderboard-place">
+                    <div class="account-wrappper">
+                        <span class="place">#4</span>
+                        <img src="https://tinyurl.com/bdz6jnxj" alt="user-pfp" class="user-pfp">
+                        <div class="user-wrapper">
+                            <div class="flex-row">
+                                <span class="username">Джон Дое</span>
+                                <span class="you-tag">Вие</span>
+                            </div>
+                            <span class="user-stats">422</span>
+                        </div>
+                    </div>
+                    <span class="score">271,2k</span>
+                </div>
+                <div class="leaderboard-place">
+                    <div class="account-wrappper">
+                        <span class="place">#4</span>
+                        <img src="https://tinyurl.com/bdz6jnxj" alt="user-pfp" class="user-pfp">
+                        <div class="user-wrapper">
+                            <div class="flex-row">
+                                <span class="username">Джон Дое</span>
+                            </div>
+                            <span class="user-stats">422</span>
+                        </div>
+                    </div>
+                    <span class="score">271,2k</span>
+                </div>
+                <div class="leaderboard-place">
+                    <div class="account-wrappper">
+                        <span class="place">#4</span>
+                        <img src="https://tinyurl.com/bdz6jnxj" alt="user-pfp" class="user-pfp">
+                        <div class="user-wrapper">
+                            <div class="flex-row">
+                                <span class="username">Джон Дое</span>
+                            </div>
+                            <span class="user-stats">422</span>
+                        </div>
+                    </div>
+                    <span class="score">271,2k</span>
+                </div>
+                <div class="leaderboard-place">
+                    <div class="account-wrappper">
+                        <span class="place">#4</span>
+                        <img src="https://tinyurl.com/bdz6jnxj" alt="user-pfp" class="user-pfp">
+                        <div class="user-wrapper">
+                            <div class="flex-row">
+                                <span class="username">Джон Дое</span>
+                            </div>
+                            <span class="user-stats">422</span>
+                        </div>
+                    </div>
+                    <span class="score">271,2k</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-wrapper">
+            <div class="stats-box">
+                <div class="stats-top">
+                    <span class="top-title">мисии</span>
+                    <div class="icon-box">
+                        <i class="bi bi-bullseye"></i>
+                    </div>
+                </div>
+                <div class="stats-box-content">
+                    <div class="stats-number">
+                        123
+                    </div>
+                    <div class="stats-tag">+20% бла бла</div>
+                </div>
+            </div>
+            
+            <div class="stats-box">
+                <div class="stats-top">
+                    <span class="top-title">точки</span>
+                    <div class="icon-box">
+                        <i class="bi bi-bullseye"></i>
+                    </div>
+                </div>
+                <div class="stats-box-content">
+                    <div class="stats-number">
+                        271,2k
+                    </div>
+                    <div class="stats-tag">+12% бла бла</div>
+                </div>
+            </div>
+
+            <div class="stats-box gap-24 d-flex-column">
+                <div class="text-wrapper">
+                    <h3>Готов ли си?</h3>
+                    <p>
+                        Започни да трупаш точки и да<br>
+                        се конкураш с останалите!
+                    </p>
+                </div>
+                <a href="#" class="btn-small-for-box">
+                    Мисии
+                </a>
+            </div>
+        </div>
+    </div>
 </body>
 <script src="{% static 'js/closeAlert.js' %}"></script>
 </html>

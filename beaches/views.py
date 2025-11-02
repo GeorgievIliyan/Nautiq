@@ -19,6 +19,9 @@ from django.urls import reverse
 from django.db.models import Count
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+import django.utils as utils
 
 # Third-party imports
 from validators.numbers_validator import is_valid_number as has_number
@@ -661,3 +664,23 @@ def add_favourite(request, beach_id):
     beach.favourites.add(user)
     
     return HttpResponse(status=204)
+
+#* ===== GAMIFICATION ===== *#
+@receiver(signal=post_save, sender=models.AcceptedTask)
+def handle_task_completion(sender, instance, created, **kwargs):
+    if instance.status == 'completed' and instance.completed_at:
+        profile = instance.user_profile
+        task = instance.task
+
+        profile.xp += task.reward
+        profile.missions_completed += 1
+        profile.save()
+
+        today = timezone.now().date()
+        first_of_month = today.replace(day=1)
+        stats, _ = models.MonthlyStats.objects.get_or_create(user=profile, month=first_of_month)
+        stats.xp += task.reward
+        stats.missions += 1
+        stats.save()
+
+        utils.check_badges(profile)

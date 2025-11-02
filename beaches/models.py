@@ -1,7 +1,10 @@
+import math
+
 from django.db import models
-import uuid
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+
+import uuid
 
 #* ===== USER PROFILE & AUTH MODELS ===== *#
 class User(AbstractUser):
@@ -12,30 +15,50 @@ class UserProfile(models.Model):
         ('bg', 'Български'),
         ('en', 'Английски')
     )
-    
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
-    
-    nickname = models.CharField(max_length=50, null=True)
+    # USER DATA
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    
+    nickname = models.CharField(max_length=50, null=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
-    
+    # GEO LOCATION
     lat = models.CharField(null=True, blank=True, default=48.8566)
     lng = models.CharField(null=True, blank=True, default=2.3522)
-    
+    # XP
     xp = models.IntegerField(default=0)
-    
-    #* SETTINGS & PREFERNCES
+    tasks_completed = models.PositiveIntegerField(default=0)
+
+    # SETTINGS
     theme = models.CharField(null=True, blank=True, default="light")
-    send_notifs = models.BooleanField(null=True, blank=True, default="True")
+    send_notifs = models.BooleanField(null=True, blank=True, default=True)
     language = models.CharField(choices=LANGUAGE_CHOICES, default="bg")
-    
+
+    # GAMIFICATION
+    @property
+    def level(self):
+        """Compute level from XP"""
+        return int(0.1 * math.sqrt(self.xp))
+
+    @property
+    def xp_for_next_level(self):
+        next_level = self.level + 1
+        return int((next_level / 0.1) ** 2)
+
+    @property
+    def progress_percent(self):
+        prev_level_xp = int((self.level / 0.1) ** 2)
+        return round(((self.xp - prev_level_xp) / (self.xp_for_next_level - prev_level_xp)) * 100, 2)
+
     def __str__(self):
-        return self.user.username
+        return f"{self.user.username} with nickname {self.nickname}"
+    
+class MonthlyStats(models.Model):
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='monthly_stats')
+    month = models.DateField()
+    tasks_completed = models.PositiveIntegerField(default=0)
+    xp = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ('user', 'month')
 
 #* ===== APP MODELS ===== *#
 class Beach(models.Model):
