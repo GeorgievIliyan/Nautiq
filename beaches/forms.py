@@ -172,6 +172,20 @@ class LogBeachForm(forms.Form):
         required=False,
         max_length=300
     )
+    
+#* ===== GAMIFICATION ===== *#
+
+class TaskCompletionForm(forms.ModelForm):
+    class Meta:
+        model = models.AcceptedTask
+        fields = ['proof_image']
+        widgets = {
+            'proof_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'proof_image': 'Моля, качете снимка за докозателсвто.',
+        }
+
 
 #* ===== MISC ===== *#
 class SettingsForm(forms.Form):

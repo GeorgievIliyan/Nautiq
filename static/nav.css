@@ -86,3 +86,16 @@ nav ul li.active a, nav ul li.active{
 nav ul li.active svg{
     display: block;
 }
+
+@media(prefers-color-scheme: dark){
+    .nav-indicator{
+        background-color: #1C1C1E;
+    }
+    nav{
+        background-color: #242424;
+    }
+    nav a{
+        text-decoration: none;
+        color: #656566;
+    }
+}

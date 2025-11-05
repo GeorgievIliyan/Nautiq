@@ -3,6 +3,7 @@ import math
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+from .utils import get_clip_match
 
 import uuid
 
@@ -95,7 +96,7 @@ class Beach(models.Model):
     favourites = models.ManyToManyField(User, related_name="favourite_beaches", blank=True)
     
     def __str__(self):
-        return (F"{self.name}: {self.latitude},{self.longitude}")
+        return f"{self.name}: {self.latitude},{self.longitude}"
 
 class BeachImage(models.Model):
     title = models.CharField(max_length=100, null=True, blank=True)
@@ -266,9 +267,17 @@ class Task(models.Model):
     def __str__(self):
         return self.title
 
+
+class Badge(models.Model):
+    title = models.CharField(max_length=50)
+    image = models.ImageField()
+    desc = models.TextField()
+    
+    def __str__(self):
+        return self.title
+
 class AcceptedTask(models.Model):
     user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
 
     STATUS_CHOICES = (
@@ -279,6 +288,14 @@ class AcceptedTask(models.Model):
 
     accepted_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    proof_image = models.ImageField(upload_to='task_proofs/', blank=True, null=True)
+    
+    def analyze_image(self):
+        prompts = ["a beach", "a soda can", "a plastic bottle", "trash", "sand", "sea"]
+        best, conf, _ = get_clip_match(self.image.path, prompts)
+        self.label = best
+        self.confidence = conf
+        self.save()
 
     class Meta:
         unique_together = ('user_profile', 'task')
@@ -286,10 +303,10 @@ class AcceptedTask(models.Model):
     def __str__(self):
         return f"{self.user_profile.user.username}'s {self.task.title} task"
 
-class Badge(models.Model):
-    title = models.CharField(max_length=50)
-    image = models.ImageField()
-    desc = models.TextField()
-    
-    def __str__(self):
-        return self.title
+    def complete(self, image=None):
+        from django.utils import timezone
+        self.status = 'completed'
+        self.completed_at = timezone.now()
+        if image:
+            self.proof_image = image
+        self.save()

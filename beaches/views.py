@@ -1,6 +1,10 @@
 import json
 from datetime import date
+import random
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Django imports
 from django.http import HttpResponse
@@ -26,6 +30,10 @@ import django.utils as utils
 # Third-party imports
 from validators.numbers_validator import is_valid_number as has_number
 from validators.uppercase_validator import is_valid_uppercase as has_uppercase
+from .utils import verify_task_with_gemini
+
+# Gemini AI
+from google import genai
 
 # Local imports
 from . import forms
@@ -684,3 +692,52 @@ def handle_task_completion(sender, instance, created, **kwargs):
         stats.save()
 
         utils.check_badges(profile)
+                
+def generate_random_task(user_profile: models.UserProfile) -> list:
+    pass
+    # Accepted tasks
+    taken_tasks = models.AcceptedTask.objects.filter(user_profile = user_profile).values_list('task_id', flat=True)
+    # Remaining tasks
+    available_tasks = models.Task.objects.exclude(id__in = taken_tasks)
+    
+    if not available_tasks.exists():
+        return None
+    
+    return random.choice(list(available_tasks))
+
+@login_required
+def complete_task(request, task_id):
+    if request.method != 'POST':
+        return HttpResponse("Методът не е позволен.", status=405)
+
+    profile = request.user.userprofile
+    accepted_task = get_object_or_404(
+        models.AcceptedTask,
+        user_profile=profile,
+        task_id=task_id,
+        status='accepted'
+    )
+
+    image = request.FILES.get('proof_image')
+    if not image:
+        return HttpResponse("Моля, качете снимка.", status=400)
+
+    accepted_task.proof_image = image
+    accepted_task.completed_at = timezone.now()
+    accepted_task.save()
+
+    image_path = accepted_task.proof_image.path
+    task_description = accepted_task.task.description
+
+    verified, confidence = verify_task_with_gemini(image_path, task_description)
+
+    accepted_task.verified = verified
+    accepted_task.verification_confidence = confidence
+
+    if verified:
+        accepted_task.status = 'completed'
+        accepted_task.save()
+        return HttpResponse("✅ Задачата е потвърдена и завършена!", status=200)
+    else:
+        accepted_task.save()
+        return HttpResponse("❌ Снимката не съвпада с описанието. Опитайте отново.", status=400)

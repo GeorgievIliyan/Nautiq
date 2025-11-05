@@ -21,7 +21,6 @@ body {
     flex-direction: row;
     gap: 32px;
     flex: 1; 
-    height: fit-content;
 }
 
 .dashboard-top h1 {
@@ -34,7 +33,6 @@ body {
     flex-direction: column;
     border-radius: 10px;
     padding: 32px;
-    background: url('img.jpg') no-repeat center center;
     background-size: cover;
     color: white;
     overflow: hidden;
@@ -70,13 +68,10 @@ body {
     padding: 32px;
     border-radius: 10px;
     box-shadow: 0px 0px 12px -2px rgba(0, 0, 0, 0.25);
-    background: linear-gradient(to right, #FFFFFF 0%, #C9E4F7 250%);
-    height: 100%; 
-    max-height: none;
+    background: linear-gradient(to top right, #FFFFFF 0%, #E3EFF7 50%, #C9E4F7 100%);
     overflow-y: scroll;
     scrollbar-width: none;
-    flex-basis: 0;
-    flex-grow: 11;
+    flex: 11;
 }
 
 .leaderboard h2 {
@@ -231,12 +226,11 @@ body {
 }
 
 .stats-wrapper {
-    flex-basis: 0;
-    flex-grow: 9; 
     height: 100%; 
     display: flex;
     flex-direction: column;
     gap: 16px; 
+    flex: 9;
 }
 
 .stats-box {
@@ -288,12 +282,10 @@ body {
 }
 .stats-box-content{
     display: flex;
-    flex-direction: column; /* This is the base and desired behavior */
+    flex-direction: column;
     gap: 8px;
     align-items: flex-start;
 }
-
-/* REMOVED ALL conflicting .stats-box:not(.d-flex-column) .stats-box-content { flex-direction: row; } RULES */
 
 .stats-tag{
     color: #048FE6;
@@ -333,10 +325,6 @@ body {
     gap: 4px;
 }
 /* ------------------ Responsive ------------------ */
-
-/* The only rule needed on min-width: 1025px was for row, 
-    but since we need column always, this media query is no longer necessary.
-*/
 
 @media (max-width: 1024px) {
     body {
@@ -394,8 +382,6 @@ body {
         min-height: 180px;
         padding: 24px;
     }
-    
-    /* Removed the explicit column override here, as the base class is already column. */
 }
 
 @media (max-width: 768px) {
@@ -523,6 +509,7 @@ body {
             rgba(4, 143, 230, 0.2) 100%
         );
         color: white;
+        border: 1px solid #303030;
     }
     .stats-box p{
         color: #989898;
