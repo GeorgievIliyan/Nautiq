@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash, get_user_model
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.core.mail import send_mail
+from django.core.files.storage import default_storage
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -26,14 +27,12 @@ from django.template.loader import render_to_string
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import django.utils as utils
+from beaches.ai.clip_recognizer import get_clip_match
+from PIL import Image
 
 # Third-party imports
 from validators.numbers_validator import is_valid_number as has_number
 from validators.uppercase_validator import is_valid_uppercase as has_uppercase
-from .utils import verify_task_with_gemini
-
-# Gemini AI
-from google import genai
 
 # Local imports
 from . import forms
@@ -335,10 +334,11 @@ def activate(request, uidb64, token):
 @login_required
 def dashboard(request):
     user = request.user
+    profile = models.UserProfile.objects.filter(user = user)
     
     if user.is_first_login:
         return redirect('enter_details')
-    return render(request, 'app/dashboard.html', {'user': user})
+    return render(request, 'app/dashboard.html', {'user': user, 'profile': profile})
 
 @login_required
 def map_view(request):
@@ -693,24 +693,43 @@ def handle_task_completion(sender, instance, created, **kwargs):
 
         utils.check_badges(profile)
                 
-def generate_random_task(user_profile: models.UserProfile) -> list:
-    pass
-    # Accepted tasks
-    taken_tasks = models.AcceptedTask.objects.filter(user_profile = user_profile).values_list('task_id', flat=True)
-    # Remaining tasks
-    available_tasks = models.Task.objects.exclude(id__in = taken_tasks)
+def generate_random_task(user_profile: models.UserProfile):
+    taken_tasks = models.AcceptedTask.objects.filter(user_profile=user_profile).values_list('task_id', flat=True)
+    
+    available_tasks = models.Task.objects.exclude(id__in=taken_tasks)
     
     if not available_tasks.exists():
         return None
+
+    easy_tasks = list(available_tasks.filter(difficulty='easy'))
+    medium_tasks = list(available_tasks.filter(difficulty='medium'))
+    hard_tasks = list(available_tasks.filter(difficulty='hard'))
+
+    task_pool = easy_tasks * 5 + medium_tasks * 3 + hard_tasks
     
-    return random.choice(list(available_tasks))
+    if not task_pool:
+        return None
+
+    selected_task = random.choice(task_pool)
+
+    accepted_task = models.AcceptedTask.objects.create(
+        user_profile=user_profile,
+        task=selected_task,
+        status='accepted'
+    )
+    
+    return accepted_task
 
 @login_required
 def complete_task(request, task_id):
     if request.method != 'POST':
         return HttpResponse("Методът не е позволен.", status=405)
 
-    profile = request.user.userprofile
+    try:
+        profile = models.UserProfile.objects.get(user=request.user)
+    except models.UserProfile.DoesNotExist:
+        return HttpResponse("User profile not found.", status=404)
+
     accepted_task = get_object_or_404(
         models.AcceptedTask,
         user_profile=profile,
@@ -722,22 +741,95 @@ def complete_task(request, task_id):
     if not image:
         return HttpResponse("Моля, качете снимка.", status=400)
 
-    accepted_task.proof_image = image
-    accepted_task.completed_at = timezone.now()
-    accepted_task.save()
+    filename = f"{accepted_task.id}_proof_image_{image.name}"
+    saved_path = default_storage.save(os.path.join('proof_images', filename), image)
+    file_path = default_storage.path(saved_path)
 
-    image_path = accepted_task.proof_image.path
+    print(f"📸 Saved image at: {file_path}")
+
+    if not os.path.exists(file_path):
+        return HttpResponse(f"Error: The file does not exist at {file_path}", status=500)
+
     task_description = accepted_task.task.description
 
-    verified, confidence = verify_task_with_gemini(image_path, task_description)
+    prompts = [
+        task_description,
+        "a random object",
+        "a person",
+        "a tree",
+        "a building",
+        "the sky",
+        "the sea",
+        "trash",
+        "nothing related"
+    ]
 
+    print(f"Using prompts: {prompts}")
+
+    best_match, confidence, scores = get_clip_match(file_path, prompts)
+
+    print(f"Best match: {best_match}")
+    print(f"Confidence: {confidence}")
+    print(f"All scores: {scores}")
+    print(f"Task description: {task_description}")
+
+    verified = (best_match.lower() == task_description.lower()) and confidence > 0.25
+
+    print(f"Verification status: {verified}")
+
+    accepted_task.status = 'completed' if verified else 'failed'
+    accepted_task.proof_image = saved_path
     accepted_task.verified = verified
     accepted_task.verification_confidence = confidence
+    accepted_task.save()
 
     if verified:
-        accepted_task.status = 'completed'
-        accepted_task.save()
         return HttpResponse("✅ Задачата е потвърдена и завършена!", status=200)
     else:
-        accepted_task.save()
         return HttpResponse("❌ Снимката не съвпада с описанието. Опитайте отново.", status=400)
+
+
+@login_required
+def accept_task(request, task_id):
+    if request.method != "POST":
+        return HttpResponse("Method not allowed.", status=405)
+
+    profile = models.UserProfile.objects.filter(user = request.user).get()
+    task = get_object_or_404(models.Task, id=task_id)
+
+    already_taken = models.AcceptedTask.objects.filter(
+        user_profile=profile, task=task
+    ).exists()
+
+    if already_taken:
+        return HttpResponse("❗ You’ve already accepted this task.", status=400)
+
+    models.AcceptedTask.objects.create(
+        user_profile=profile,
+        task=task,
+        status="accepted",
+        accepted_at=timezone.now(),
+    )
+
+    return redirect("tasks")
+
+@login_required
+def tasks_view(request):
+    profile = models.UserProfile.objects.get(user=request.user)
+
+    all_tasks = models.Task.objects.all()
+
+    accepted_tasks = models.AcceptedTask.objects.filter(
+        user_profile=profile, status='accepted'
+    )
+    completed_tasks = models.AcceptedTask.objects.filter(
+        user_profile=profile, status='completed'
+    )
+
+    context = {
+        "tasks": all_tasks,
+        "accepted_ids": list(accepted_tasks.values_list("task_id", flat=True)),
+        "completed_ids": list(completed_tasks.values_list("task_id", flat=True)),
+    }
+
+    return render(request, "app/gamification/tasks.html", context)

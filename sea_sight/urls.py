@@ -17,6 +17,8 @@ urlpatterns = [
     path('moderation/dashboard/beach/approve/<uuid:beach_id>/', views.mark_as_approved, name='beach_approve'),
 ]
 
-
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

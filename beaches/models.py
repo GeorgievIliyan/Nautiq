@@ -3,7 +3,7 @@ import math
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
-from .utils import get_clip_match
+# from .utils import get_clip_match
 
 import uuid
 
@@ -254,15 +254,11 @@ class BeachReport(models.Model):
     
 #* ===== GAMIFICATION ===== *#
 class Task(models.Model):
-    TASK_TAG_CHOICES = (
-        ('contribution','Принос'),
-        ('review','Мнение')
-    )
     
     title = models.CharField(max_length=50)
     description = models.TextField(max_length=200)
-    reward = models.PositiveSmallIntegerField()
-    tag = models.CharField(choices=TASK_TAG_CHOICES, max_length=50)
+    difficulty = models.CharField(max_length=10, choices=[('easy','Easy'),('medium','Medium'),('hard','Hard')], default='easy')
+    reward = models.PositiveIntegerField(default=10)
     
     def __str__(self):
         return self.title
@@ -292,10 +288,10 @@ class AcceptedTask(models.Model):
     
     def analyze_image(self):
         prompts = ["a beach", "a soda can", "a plastic bottle", "trash", "sand", "sea"]
-        best, conf, _ = get_clip_match(self.image.path, prompts)
-        self.label = best
-        self.confidence = conf
-        self.save()
+        # best, conf, _ = get_clip_match(self.image.path, prompts)
+        # self.label = best
+        # self.confidence = conf
+        # self.save()
 
     class Meta:
         unique_together = ('user_profile', 'task')

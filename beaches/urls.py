@@ -25,6 +25,10 @@ urlpatterns = [
     #* LOGGING & LOGS:
     path('logs/today/<uuid:beach_id>/', views.view_logs_spec, name='log_beach_spec'),
     path('logs/my-logs/all/', views.view_my_logs, name='my_logs'),
+    #* GAMIFICATION
+    path("tasks/", views.tasks_view, name="tasks"),
+    path("tasks/accept/<int:task_id>/", views.accept_task, name="accept_task"),
+    path("tasks/complete/<int:task_id>/", views.complete_task, name="complete_task"),
     #* MISC:
     path('account/setup/', views.enter_details, name='enter_details'),
     path('settings/', views.app_settings, name='settings'),

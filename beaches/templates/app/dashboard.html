@@ -26,8 +26,8 @@
     {% include 'app/components/navbar.html' %}
     <div class="dashboard-top">
         <div class="content">
-            <h1><span class="regular">Здравей,</span> Иван!</h1>
-            <span>Пътешественик - ниво 10</span>
+            <h1><span class="regular">Здравей,</span> {{ user.username }}!</h1>
+            <span>XP: {{ profile.xp }}</span>
         </div>
     </div>
 
