@@ -33,6 +33,7 @@ from PIL import Image
 # Third-party imports
 from validators.numbers_validator import is_valid_number as has_number
 from validators.uppercase_validator import is_valid_uppercase as has_uppercase
+from .utils import generate_daily_tasks as generate_tasks
 
 # Local imports
 from . import forms
@@ -692,33 +693,6 @@ def handle_task_completion(sender, instance, created, **kwargs):
         stats.save()
 
         utils.check_badges(profile)
-                
-def generate_random_task(user_profile: models.UserProfile):
-    taken_tasks = models.AcceptedTask.objects.filter(user_profile=user_profile).values_list('task_id', flat=True)
-    
-    available_tasks = models.Task.objects.exclude(id__in=taken_tasks)
-    
-    if not available_tasks.exists():
-        return None
-
-    easy_tasks = list(available_tasks.filter(difficulty='easy'))
-    medium_tasks = list(available_tasks.filter(difficulty='medium'))
-    hard_tasks = list(available_tasks.filter(difficulty='hard'))
-
-    task_pool = easy_tasks * 5 + medium_tasks * 3 + hard_tasks
-    
-    if not task_pool:
-        return None
-
-    selected_task = random.choice(task_pool)
-
-    accepted_task = models.AcceptedTask.objects.create(
-        user_profile=user_profile,
-        task=selected_task,
-        status='accepted'
-    )
-    
-    return accepted_task
 
 @login_required
 def complete_task(request, task_id):

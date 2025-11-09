@@ -3,12 +3,236 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nautiq | Kарта</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Nautiq | Карта</title>
 
+    <!-- MAP LIBRE -->
+    <link href="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.css" rel="stylesheet"/>
+    <script src="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.js"></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'modals.css' %}">
+    <link rel="stylesheet" href="{% static 'map.css' %}">
+
+    <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.png' %}">
 </head>
+
 <body>
-    {% include 'app/components/navbar.html' %}
+    {% include 'app/modals/mapModals.html' %}
+
+    <div id="map"></div>
+
+    <div id="info-panel" class="info-panel" aria-hidden="true">
+        <button id="close-panel" type="button" aria-label="Close panel">×</button>
+        <div id="info-content"></div>
+    </div>
+
+    <div id="info-bottom" class="info-bottom" aria-hidden="true">
+        <div id="drag-handle" role="button" aria-label="Close bottom sheet"></div>
+        <div id="info-bottom-content"></div>
+    </div>
+
+    <span id="user_lat" class="d-none">{{ user_lat }}</span>
+    <span id="user_lng" class="d-none">{{ user_lng }}</span>
+    {{ beaches|json_script:"beaches_json" }}
+
+    <script src="{% static 'js/mapModals.js' %}"></script>
+
+    <script>
+        const infoPanel = document.getElementById("info-panel");
+        const infoContent = document.getElementById("info-content");
+        const bottomSheet = document.getElementById("info-bottom");
+        const bottomContent = document.getElementById("info-bottom-content");
+        const closePanelBtn = document.getElementById("close-panel");
+
+        const latInput = document.getElementById("id_latitude");
+        const lngInput = document.getElementById("id_longitude");
+
+        const USER_LAT = (document.getElementById('user_lat') && document.getElementById('user_lat').textContent.trim()) ? parseFloat(document.getElementById('user_lat').textContent) : 43.204666;
+        const USER_LNG = (document.getElementById('user_lng') && document.getElementById('user_lng').textContent.trim()) ? parseFloat(document.getElementById('user_lng').textContent) : 27.910543;
+
+        let BEACHES_DATA = [];
+        const beachesScript = document.getElementById('beaches_json');
+        if (beachesScript) {
+            try {
+                BEACHES_DATA = JSON.parse(beachesScript.textContent);
+            } catch (err) {
+                console.error('Failed to parse beaches_json:', err);
+                BEACHES_DATA = [];
+            }
+        }
+
+        const MIN_DISTANCE_METERS = 50;
+        const MIN_MARKER_ZOOM = 10;
+
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        let mapTheme = prefersDark ? "jawg-dark" : "jawg-lagoon";
+
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: `https://api.jawg.io/styles/${mapTheme}.json?access-token={{ jawg_token }}`,
+            zoom: 13,
+            center: [USER_LNG, USER_LAT]
+        });
+
+        map.addControl(new maplibregl.NavigationControl());
+
+        let newMarker = null;
+        const existingMarkers = [];
+        const beachMarkers = [];
+
+        function deg2rad(deg) { return deg * (Math.PI / 180); }
+        function getDistanceMeters(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = deg2rad(lat2 - lat1);
+            const dLon = deg2rad(lon2 - lon1);
+            const a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+                    Math.cos(deg2rad(lat1))*Math.cos(deg2rad(lat2)) *
+                    Math.sin(dLon/2)*Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c * 1000;
+        }
+
+        function safeAddClass(el, cls) { if (el) el.classList.add(cls); }
+        function safeRemoveClass(el, cls) { if (el) el.classList.remove(cls); }
+
+        function updateMarkerVisibility() {
+            const zoom = map.getZoom();
+            beachMarkers.forEach(marker => {
+                const el = marker && marker.getElement();
+                if (!el) return;
+                el.style.display = zoom >= MIN_MARKER_ZOOM ? "block" : "none";
+            });
+        }
+
+        function renderInfo(data) {
+            const target = window.innerWidth >= 768 ? infoContent : bottomContent;
+            if (!target) return;
+
+            let html = `
+                <h2>${data.name || "Без име"}</h2>
+                <p>${data.description || "Няма информация."}</p>
+                <hr/>
+                <ul class="list-unstyled">
+            `;
+
+            for (const [key, value] of Object.entries(data)) {
+                if (["name","description","pk","log_id"].includes(key)) continue;
+                if (value === null || value === "" || typeof value === "undefined") continue;
+
+                let displayValue = value;
+                if (typeof value === "boolean") displayValue = value ? "✅ Да" : "❌ Не";
+
+                const formattedKey = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+                html += `<li><strong>${formattedKey}:</strong> ${displayValue}</li>`;
+            }
+
+            html += `</ul>
+                <button class="btn-red mt-3" onclick="openReportModal()">Докладвайте проблем</button>
+            `;
+
+            target.innerHTML = html;
+        }
+
+        function openInfo(data) {
+            renderInfo(data);
+            if (window.innerWidth >= 768) safeAddClass(infoPanel, "visible");
+            else safeAddClass(bottomSheet, "visible");
+        }
+
+        function closeInfo() {
+            safeRemoveClass(infoPanel, "visible");
+            safeRemoveClass(bottomSheet, "visible");
+        }
+
+        if (closePanelBtn) closePanelBtn.addEventListener("click", closeInfo);
+        const dragHandle = document.getElementById('drag-handle');
+        if (dragHandle) dragHandle.addEventListener("click", closeInfo);
+
+        map.on('load', () => {
+            if (!Array.isArray(BEACHES_DATA)) BEACHES_DATA = [];
+
+            BEACHES_DATA.forEach(beach => {
+                const lat = parseFloat(beach.latitude ?? beach.lat ?? beach.latitude);
+                const lng = parseFloat(beach.longitude ?? beach.lng ?? beach.longitude);
+                if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+                const coords = [lng, lat];
+                const marker = new maplibregl.Marker({ color: "#FF7F50" })
+                    .setLngLat(coords)
+                    .addTo(map);
+
+                existingMarkers.push({ marker, coordinates: coords, id: beach.id });
+                beachMarkers.push(marker);
+
+                marker.getElement().addEventListener("click", async (ev) => {
+                    ev.stopPropagation();
+                    try {
+                        const resp = await fetch(`/beach/${beach.id}/`);
+                        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                        const data = await resp.json();
+
+                        if (latInput) latInput.value = data.latitude ?? beach.latitude ?? lat;
+                        if (lngInput) lngInput.value = data.longitude ?? beach.longitude ?? lng;
+
+                        openInfo(data);
+                    } catch (err) {
+                        console.error("Error fetching beach data:", err);
+                        if (infoContent) infoContent.innerHTML = `<p class="text-danger">Възникна грешка при зареждането на информацията.</p>`;
+                        safeAddClass(infoPanel, "visible");
+                    }
+                });
+            });
+
+            updateMarkerVisibility();
+            map.on('zoom', updateMarkerVisibility);
+        });
+
+        map.on('click', (e) => {
+            const { lng, lat } = e.lngLat;
+
+            closeInfo();
+
+            for (const m of existingMarkers) {
+                const [mlng, mlat] = m.coordinates;
+                const dist = getDistanceMeters(lat, lng, mlat, mlng);
+                if (dist < MIN_DISTANCE_METERS) {
+                    alert("Твърде близо до съществуващ плаж!");
+                    return;
+                }
+            }
+
+            if (newMarker) newMarker.remove();
+            newMarker = new maplibregl.Marker({ color: "#0077ff" }).setLngLat([lng, lat]).addTo(map);
+
+            if (latInput) latInput.value = lat.toFixed(6);
+            if (lngInput) lngInput.value = lng.toFixed(6);
+
+            const popupContent = document.createElement('div');
+            popupContent.className = 'popup-marker-content';
+            popupContent.innerHTML = `
+                <p>Нов плаж</p>
+                <p>Координати: ${lat.toFixed(5)}, ${lng.toFixed(5)}</p>
+                <button class="btn-blue">Добави плаж</button>
+            `;
+            const btn = popupContent.querySelector('button');
+            if (btn) btn.addEventListener('click', (evt) => {
+                evt.preventDefault();
+                openAddModal?.();
+            });
+
+            newMarker.setPopup(new maplibregl.Popup().setDOMContent(popupContent)).togglePopup();
+            beachMarkers.push(newMarker);
+            updateMarkerVisibility();
+        });
+
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                const newTheme = e.matches ? 'jawg-dark' : 'jawg-lagoon';
+                map.setStyle(`https://api.jawg.io/styles/${newTheme}.json?access-token={{ jawg_token }}`);
+            });
+        }
+    </script>
 </body>
 </html>

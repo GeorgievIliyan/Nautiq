@@ -3,13 +3,36 @@ import math
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
-# from .utils import get_clip_match
 
 import uuid
 
 #* ===== USER PROFILE & AUTH MODELS ===== *#
 class User(AbstractUser):
     is_first_login = models.BooleanField(default=True)
+
+class Task(models.Model):
+    DIFFICULTY_CHOICES = [
+        ('easy', 'Easy'),
+        ('medium', 'Medium'),
+        ('hard', 'Hard'),
+    ]
+
+    CATEGORY_CHOICES = [
+        ('clean', 'Погрижи се природата'),
+        ('photo', 'Снимай'),
+        ('observe', 'Научи за фауната'),
+    ]
+
+    title = models.CharField(max_length=200, default="Task")
+    description = models.TextField(max_length=100, null=True)
+    user_desc = models.TextField(max_length=1000, null=True)
+    difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default="easy")
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="photo")
+    date_assigned = models.DateField(null=True, blank=True)
+    is_daily = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.title} ({self.difficulty})"
 
 class UserProfile(models.Model):
     LANGUAGE_CHOICES = (
@@ -27,6 +50,7 @@ class UserProfile(models.Model):
     # XP
     xp = models.IntegerField(default=0)
     tasks_completed = models.PositiveIntegerField(default=0)
+    tasks = models.ManyToManyField(Task, blank=True, related_name="assigned_users")
 
     # SETTINGS
     theme = models.CharField(null=True, blank=True, default="light")
@@ -253,16 +277,6 @@ class BeachReport(models.Model):
         return (f"Report \"{self.title}\", made by {self.submitted_by.username} on {self.date}.")
     
 #* ===== GAMIFICATION ===== *#
-class Task(models.Model):
-    
-    title = models.CharField(max_length=50)
-    description = models.TextField(max_length=200)
-    difficulty = models.CharField(max_length=10, choices=[('easy','Easy'),('medium','Medium'),('hard','Hard')], default='easy')
-    reward = models.PositiveIntegerField(default=10)
-    
-    def __str__(self):
-        return self.title
-
 
 class Badge(models.Model):
     title = models.CharField(max_length=50)
@@ -276,22 +290,26 @@ class AcceptedTask(models.Model):
     user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
 
-    STATUS_CHOICES = (
+    STATUS_CHOICES = [
+        ('unaccepted', 'Неизбрано'),
         ('accepted', 'В прогрес'),
         ('completed', 'Завършено'),
-    )
+    ]
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='accepted')
 
     accepted_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     proof_image = models.ImageField(upload_to='task_proofs/', blank=True, null=True)
     
+    """
     def analyze_image(self):
         prompts = ["a beach", "a soda can", "a plastic bottle", "trash", "sand", "sea"]
         # best, conf, _ = get_clip_match(self.image.path, prompts)
         # self.label = best
         # self.confidence = conf
         # self.save()
+    """
 
     class Meta:
         unique_together = ('user_profile', 'task')
