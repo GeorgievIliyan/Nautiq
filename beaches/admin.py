@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, UserProfile, Beach, BeachLog, BeachReport, AcceptedTask, Task
+from .models import User, UserProfile, Beach, BeachLog, BeachReport, AcceptedTask, Task, BeachImage
 
 class CustomUserAdmin(BaseUserAdmin):
     fieldsets = BaseUserAdmin.fieldsets + (
@@ -21,3 +21,4 @@ admin.site.register(BeachLog)
 admin.site.register(BeachReport)
 admin.site.register(AcceptedTask)
 admin.site.register(Task)
+admin.site.register(BeachImage)

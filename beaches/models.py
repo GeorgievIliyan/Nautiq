@@ -3,8 +3,12 @@ import math
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+import random
 
 import uuid
+
+def default_rating():
+    return round(random.uniform(3.5, 5.0), 1)
 
 #* ===== USER PROFILE & AUTH MODELS ===== *#
 class User(AbstractUser):
@@ -100,6 +104,7 @@ class Beach(models.Model):
     description = models.TextField(max_length=250, null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+    rating = models.FloatField(default=default_rating)
     
     #* SAFETY
     has_lifeguard = models.BooleanField(default=False)
@@ -125,7 +130,7 @@ class Beach(models.Model):
 class BeachImage(models.Model):
     title = models.CharField(max_length=100, null=True, blank=True)
     beach = models.ForeignKey(Beach, on_delete=models.CASCADE, blank=True, null=True)
-    image = models.ImageField(null=False, blank=False, upload_to='static/beach_images/')
+    image = models.ImageField(upload_to='beach_images')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     

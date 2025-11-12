@@ -28,7 +28,7 @@
     background-color: #FBFBFB;
     color: #222222;
     z-index: 10000;
-    display: flex;
+    display: none;
     flex-direction: column;
     gap: 32px;
     width: fit-content;
@@ -43,6 +43,9 @@
     box-shadow: rgba(149, 157, 165, 0.2) 0px 0px 20px;
 
     overflow-y: scroll;
+    scrollbar-width: none;
+
+    overflow-y: auto;
     scrollbar-width: none;
 }
 .modal::-webkit-scrollbar {
@@ -204,14 +207,26 @@
 input[type="checkbox"] {
     accent-color: #048FE6;
 }
-textarea{
-    resize: vertical;
-    max-height: 200px;
-    min-height: 50px;
-    overflow-y: scroll;
-    scrollbar-width: none;
+input[type="file"]::-webkit-file-upload-button:hover{
+    background-color: #383838;
 }
-textarea::-webkit-scrollbar{
+textarea {
+    resize: vertical;
+    overflow-y: auto;
+    scrollbar-width: none;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+textarea::-webkit-scrollbar {
+    display: none;
+    width: 0px;
+}
+
+textarea::-webkit-scrollbar-track{
+    display: none;
+}
+
+textarea::-webkit-scrollbar-button{
     display: none;
 }
 

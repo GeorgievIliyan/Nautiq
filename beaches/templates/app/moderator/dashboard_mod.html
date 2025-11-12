@@ -1,85 +1,81 @@
-{% load widget_tweaks %}
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bg">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aurea | Модераторско табло</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.png' %}">
-    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <title>Nautiq | Модераторско табло</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.svg' %}">
+    <link rel="stylesheet" href="{% static 'dashboard_mod.css' %}">
 </head>
-<body class="container py-5">
-    <h2 class="mb-4 text-primary">Плажове за одобрение:</h2>
+
+<body class="mod-container">
+
+    <h2 class="section-title blue">Плажове за одобрение</h2>
 
     {% for beach in pending %}
-        <div class="card p-4 mb-4 shadow-sm border">
-            <h3 class="mb-3">{{ beach.name }}</h3>
-            <p class="mb-2"><strong>Описание:</strong> {{ beach.description }}</p>
+        <div class="mod-card green-border">
+            <h3 class="card-title">{{ beach.name }}</h3>
+            <p><strong>Описание:</strong> {{ beach.description }}</p>
 
-            <div class="row row-cols-md-3 g-2 small text-muted mb-3">
-                <p class="col mb-0"><strong>Спасител:</strong> {{ beach.has_lifeguard|yesno:"Да,Не" }}</p>
-                <p class="col mb-0"><strong>Паркинг:</strong> {{ beach.has_parking|yesno:"Да,Не" }}</p>
-                <p class="col mb-0"><strong>Платен Паркинг:</strong> {{ beach.has_paid_parking|yesno:"Да,Не" }}</p>
-                <p class="col mb-0"><strong>Тоалетни:</strong> {{ beach.has_toilets|yesno:"Да,Не" }}</p>
-                <p class="col mb-0"><strong>Съблекални:</strong> {{ beach.has_changing_rooms|yesno:"Да,Не" }}</p>
-                <p class="col mb-0"><strong>Платена зона:</strong> {{ beach.has_paid_zone|yesno:"Да,Не" }}</p>
-                <p class="col mb-0"><strong>Заведения:</strong> {{ beach.has_beach_bar|yesno:"Да,Не" }}</p>
+            <div class="info-grid">
+                <p><strong>Спасител:</strong> {{ beach.has_lifeguard|yesno:"Да,Не" }}</p>
+                <p><strong>Паркинг:</strong> {{ beach.has_parking|yesno:"Да,Не" }}</p>
+                <p><strong>Платен Паркинг:</strong> {{ beach.has_paid_parking|yesno:"Да,Не" }}</p>
+                <p><strong>Тоалетни:</strong> {{ beach.has_toilets|yesno:"Да,Не" }}</p>
+                <p><strong>Съблекални:</strong> {{ beach.has_changing_rooms|yesno:"Да,Не" }}</p>
+                <p><strong>Платена зона:</strong> {{ beach.has_paid_zone|yesno:"Да,Не" }}</p>
+                <p><strong>Заведения:</strong> {{ beach.has_beach_bar|yesno:"Да,Не" }}</p>
             </div>
 
-            <div class="d-flex gap-2 mt-2">
-                <a class="btn btn-sm btn-success" href="{% url 'beach_approve' beach.id %}">Одобри</a>
-                <a class="btn btn-sm btn-danger" href="{% url 'beach_delete' beach.id %}">Премахни</a>
+            <div class="actions">
+                <a href="{% url 'beach_approve' beach.id %}" class="btn green">Одобри</a>
+                <a href="{% url 'beach_delete' beach.id %}" class="btn red">Премахни</a>
             </div>
         </div>
     {% empty %}
-        <p class="alert alert-info">За сега няма плажове в опашката...</p>
+        <div class="alert blue">Няма плажове за одобрение...</div>
     {% endfor %}
 
-    <hr class="my-5">
-
-    <h2 class="mb-4 text-danger">Докладвани проблеми:</h2>
+    <h2 class="section-title red">Докладвани проблеми</h2>
 
     {% for report in reports %}
-        <div class="card p-4 mb-3 shadow-sm border border-danger">
-            <h3 class="mb-2">{{ report.title }}</h3>
-            
-            <div class="small text-muted mb-3">
-                <p class="mb-0">Плаж: <span class="text-primary fw-bold">{{ report.beach.name}}</span>, ID: <span class="text-primary">{{ report.beach.id|stringformat:"s" }}</span></p>
-                <p class="mb-0">Подадено от: <span class="text-primary fw-bold">{{ report.submitted_by.username}}</span>, на: <span class="text-primary">{{ report.date|date:"Y-m-d H:i" }}</span></p>
-                <p class="mb-0">Категория: <span class="text-primary fw-bold">{{ report.category }}</span></p>
+        <div class="mod-card red-border">
+            <h3 class="card-title red">{{ report.title }}</h3>
+
+            <div class="meta">
+                <p>Плаж: <span class="highlight">{{ report.beach.name }}</span></p>
+                <p>Потребител: <span class="highlight">{{ report.submitted_by.username }}</span></p>
+                <p>Категория: <span class="highlight">{{ report.category }}</span></p>
             </div>
 
             <div class="beach-images">
                 <h4>Снимки:</h4>
-                {% for image_instance in beach.images.all %} 
-                    <img src="{{ image_instance.image.url }}" alt="Снимка на плаж {{ beach.name }}" style="max-width: 200px; margin-right: 10px;">
+                {% for image_instance in report.beach.images.all %}
+                    <img src="{{ image_instance.image.url }}" alt="Снимка на плаж {{ beach.name }}">
                 {% empty %}
-                    <p>Няма качени снимки.</p>
+                    <p class="muted">Няма качени снимки.</p>
                 {% endfor %}
             </div>
 
-            <p class="mb-3">
-                <strong>Описание:</strong> 
-                <br>
+            <p><strong>Описание:</strong><br>
                 {% if report.description %}
-                    <span class="text-secondary">{{ report.description }}</span>
+                    <span class="muted">{{ report.description }}</span>
                 {% else %}
-                    <span class="text-secondary fst-italic">Няма описание...</span>
+                    <span class="muted italic">Няма описание...</span>
                 {% endif %}
             </p>
 
-            <div class="d-flex gap-2 mt-3">
-                <a href="{% url 'report_resolve' report.id %}" class="btn btn-sm btn-success">Означи като разрешено <i class="bi bi-check2-circle"></i></a>
-                <a href="#" class="btn btn-sm btn-warning">Прегледай <i class="bi bi-eye"></i></a>
-                <a href="{% url 'report_delete' report.id %}" class="btn btn-sm btn-danger">Изтрии <i class="bi bi-trash3-fill"></i></a>
+            <div class="actions">
+                <a href="{% url 'report_resolve' report.id %}" class="btn green">Разрешено</a>
+                <a href="#" class="btn yellow">Прегледай</a>
+                <a href="{% url 'report_delete' report.id %}" class="btn red">Изтрии</a>
             </div>
         </div>
     {% empty %}
-        <p class="alert alert-info">За сега няма докладвани проблеми...</p>
+        <div class="alert blue mb-32">Няма докладвани проблеми...</div>
     {% endfor %}
 
+    <a class="btn blue" href="{% url 'admin:index' %}">Назад към табло</a>
 </body>
 </html>

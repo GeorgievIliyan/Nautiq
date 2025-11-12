@@ -11,6 +11,7 @@ nav{
     position: relative;
     overflow: hidden;
     margin: 16px auto;
+    z-index: 990;
 }
 nav ul{
     display: flex;
@@ -97,5 +98,12 @@ nav ul li.active svg{
     nav a{
         text-decoration: none;
         color: #656566;
+    }
+    #selected{
+        background-color: #1C1C1E;
+        color: #048FE6;
+    }
+    nav ul li.active a, nav ul li.active{
+        color: #048FE6;
     }
 }

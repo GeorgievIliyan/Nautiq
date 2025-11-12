@@ -11,20 +11,64 @@
     <link href="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.css" rel="stylesheet"/>
     <script src="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.js"></script>
 
+    <!--Bootstrap icons-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
     <!-- CSS -->
     <link rel="stylesheet" href="{% static 'modals.css' %}">
     <link rel="stylesheet" href="{% static 'map.css' %}">
+    <link rel="stylesheet" href="{% static 'alert.css' %}">
+    <link rel="stylesheet" href="{% static 'nav.css' %}">
 
-    <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.png' %}">
+
+    <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.svg' %}">
 </head>
+<style>
+    .modal{
+        display: none;
+    }
+    .modal-overlay{
+        display: none;
+    }
+    textarea {
+        resize: vertical;
+        overflow-y: auto;
+        scrollbar-width: none;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    textarea::-webkit-scrollbar {
+        display: none;
+        width: 0px;
+    }
 
+    textarea::-webkit-scrollbar-track{
+        display: none;
+    }
+
+    textarea::-webkit-scrollbar-button{
+        display: none;
+    }
+</style>
 <body>
     {% include 'app/modals/mapModals.html' %}
+
+    {% include 'app/components/navbar.html' %}
+
+    <div id="popup-alert-container"></div>
+
+    {% if messages %}
+        <div id="django-messages" style="display:none;">
+            {% for message in messages %}
+                <div class="django-message" data-level="{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
     <div id="map"></div>
 
     <div id="info-panel" class="info-panel" aria-hidden="true">
-        <button id="close-panel" type="button" aria-label="Close panel">×</button>
+        <button id="close-panel" type="button" aria-label="Close panel"><i class="bi bi-x"></i></button>
         <div id="info-content"></div>
     </div>
 
@@ -38,6 +82,22 @@
     {{ beaches|json_script:"beaches_json" }}
 
     <script src="{% static 'js/mapModals.js' %}"></script>
+    <script src="{% static 'js/popupAlert.js' %}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const messageElements = document.querySelectorAll('#django-messages .django-message');
+
+            messageElements.forEach(el => {
+                const text = el.textContent.trim();
+                let level = el.dataset.level || 'danger';
+                if (level.includes('success')) level = 'success';
+                else level = 'danger';
+
+                showPopupAlert(text, level, 4000);
+            });
+        });
+    </script>
 
     <script>
         const infoPanel = document.getElementById("info-panel");
@@ -72,7 +132,7 @@
         const map = new maplibregl.Map({
             container: 'map',
             style: `https://api.jawg.io/styles/${mapTheme}.json?access-token={{ jawg_token }}`,
-            zoom: 13,
+            zoom: 12,
             center: [USER_LNG, USER_LAT]
         });
 
@@ -111,25 +171,38 @@
             if (!target) return;
 
             let html = `
+                <img src = "{% static '{{ beach_image }}' %}">
                 <h2>${data.name || "Без име"}</h2>
+                <span><i class="bi bi-star-fill"></i> ${data.rating}</span>
+                <span class="secondary">${data.lat_lng}</span>
                 <p>${data.description || "Няма информация."}</p>
                 <hr/>
-                <ul class="list-unstyled">
+                <ul class="map-list">
             `;
 
             for (const [key, value] of Object.entries(data)) {
                 if (["name","description","pk","log_id"].includes(key)) continue;
                 if (value === null || value === "" || typeof value === "undefined") continue;
 
+                if (key === "wind" || key === "wind_direction" || key === "weather" || key === "weather_code") {
+                    const wind = data.wind || "";
+                    const windDir = data.wind_direction || "";
+                    const weatherData = data.weather || "";
+                    const weatherCode = data.weather_code || "";
+                    html += `<li><strong>Wind-Direction:</strong> ${windDir} ${wind}; <strong>Weather Code:</strong> ${weatherCode} - ${weatherData}</li>`;
+                    break;
+                }
+
                 let displayValue = value;
-                if (typeof value === "boolean") displayValue = value ? "✅ Да" : "❌ Не";
+                if (typeof value === "boolean") displayValue = value ? "<i class=\"bi bi-check2\"></i>" : "<i class=\"bi bi-x\"></i>";
 
                 const formattedKey = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
                 html += `<li><strong>${formattedKey}:</strong> ${displayValue}</li>`;
             }
 
+
             html += `</ul>
-                <button class="btn-red mt-3" onclick="openReportModal()">Докладвайте проблем</button>
+                <button class="btn-red mt-3" onclick="openReportModal()">Докладвайте проблем <i class="bi bi-exclamation-octagon"></i></button>
             `;
 
             target.innerHTML = html;
@@ -150,6 +223,7 @@
         const dragHandle = document.getElementById('drag-handle');
         if (dragHandle) dragHandle.addEventListener("click", closeInfo);
 
+        // BEACH APPENDING
         map.on('load', () => {
             if (!Array.isArray(BEACHES_DATA)) BEACHES_DATA = [];
 
@@ -189,6 +263,7 @@
             map.on('zoom', updateMarkerVisibility);
         });
 
+        //* MARKERS
         map.on('click', (e) => {
             const { lng, lat } = e.lngLat;
 
@@ -198,7 +273,7 @@
                 const [mlng, mlat] = m.coordinates;
                 const dist = getDistanceMeters(lat, lng, mlat, mlng);
                 if (dist < MIN_DISTANCE_METERS) {
-                    alert("Твърде близо до съществуващ плаж!");
+                    showPopupAlert("Твърде близо до съществуващ плаж!", "danger", 4000);
                     return;
                 }
             }
@@ -212,9 +287,9 @@
             const popupContent = document.createElement('div');
             popupContent.className = 'popup-marker-content';
             popupContent.innerHTML = `
-                <p>Нов плаж</p>
-                <p>Координати: ${lat.toFixed(5)}, ${lng.toFixed(5)}</p>
-                <button class="btn-blue">Добави плаж</button>
+                <p class="fw-semibold">Нов плаж</p>
+                <p class="secondary">${lat.toFixed(5)}, ${lng.toFixed(5)}</p>
+                <button class="btn-primary-xs">Добави плаж</button>
             `;
             const btn = popupContent.querySelector('button');
             if (btn) btn.addEventListener('click', (evt) => {
@@ -233,6 +308,13 @@
                 map.setStyle(`https://api.jawg.io/styles/${newTheme}.json?access-token={{ jawg_token }}`);
             });
         }
+    </script>
+
+    <script>
+        dashboard = document.getElementById("dashboard")
+        map_nav_element = document.getElementById("nav-map") 
+        dashboard.className = ""
+        map_nav_element.className = "active"
     </script>
 </body>
 </html>
