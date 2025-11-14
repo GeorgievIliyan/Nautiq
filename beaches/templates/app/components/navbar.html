@@ -1,28 +1,14 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'nav.css' %}">
+
 <nav>
     <ul>
-        <a href="{% url 'dashboard' %}">
-            <li class="active" id="dashboard">
-                Табло
-            </li>
-        </a>
-        <a href="{% url 'tasks' %}">
-            <li id="missions">
-                Мисии
-            </li>
-        </a>
-        <a href="{% url 'map' %}">
-            <li id="nav-map">
-                Карта
-            </li>
-        </a>
-        <a href="{% url 'account' %}">
-            <li id="account">
-                Профил
-            </li>
-        </a>
+        <li id="nav-dashboard active"><a href="{% url 'dashboard' %}"><i class="bi bi-grid-3x3-gap-fill"></i><span class="nav-text">Табло</span></a></li>
+        <li id="nav-missions"><a href="{% url 'tasks' %}"><i class="bi bi-clipboard-check-fill"></i><span class="nav-text">Мисии</span></a></li>
+        <li id="nav-map"><a href="{% url 'map' %}"><i class="bi bi-geo-alt-fill"></i><span class="nav-text">Карта</span></a></li>
+        <li id="nav-account"><a href="{% url 'account' %}"><i class="bi bi-person-fill"></i><span class="nav-text">Профил</span></a></li>
     </ul>
+    <div class="nav-indicator"></div>
 </nav>
 
 <script src="{% static 'js/navBar.js' %}"></script>

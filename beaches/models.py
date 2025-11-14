@@ -33,6 +33,7 @@ class Task(models.Model):
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default="easy")
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="photo")
     date_assigned = models.DateField(null=True, blank=True)
+    reward = models.PositiveIntegerField(default=10)
     is_daily = models.BooleanField(default=False)
 
     def __str__(self):
@@ -46,8 +47,14 @@ class UserProfile(models.Model):
     # USER DATA
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    nickname = models.CharField(max_length=50, null=True)
-    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    nickname = models.CharField(max_length=150, null=True)
+    profile_picture = models.ImageField(
+        upload_to='profile_images/',
+        blank=True,
+        null=True,
+        default='profile_images/default.svg'
+    )
+
     # GEO LOCATION
     lat = models.CharField(null=True, blank=True, default=48.8566)
     lng = models.CharField(null=True, blank=True, default=2.3522)

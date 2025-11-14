@@ -1,5 +1,7 @@
 {% load static %}
 {% load widget_tweaks %}
+{% load custom_filters %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -170,40 +172,64 @@
             const target = window.innerWidth >= 768 ? infoContent : bottomContent;
             if (!target) return;
 
+            const keyTranslations = {
+                has_lifeguard: "Спасител",
+                has_parking: "Паркинг",
+                has_paid_parking: "Платен паркинг",
+                has_paid_zone: "Платена зона",
+                has_beach_bar: "Бийч бар",
+                has_toilets: "Тоалетни",
+                has_changing_rooms: "Съблекални",
+                times_logged: "Брой отчети",
+            };
+
             let html = `
-                <img src = "{% static '{{ beach_image }}' %}">
-                <h2>${data.name || "Без име"}</h2>
-                <span><i class="bi bi-star-fill"></i> ${data.rating}</span>
-                <span class="secondary">${data.lat_lng}</span>
-                <p>${data.description || "Няма информация."}</p>
+                <img src="${data.beach_image}" class="beach-image">
+                <div class="info-panel-top">
+                    <h2>${data.name || "Без име"}</h2>
+                    <p><i class="bi bi-star-fill"></i> ${data.rating}</p>
+                    <p class="secondary">${data.lat_lng}</p>
+                </div>
+                <p class="beach-desc">${data.description || "Няма информация."}</p>
                 <hr/>
                 <ul class="map-list">
             `;
 
+            const skipKeys = [
+                "name", "description", "pk", "log_id",
+                "wind", "wind_direction", "wind_direction_icon",
+                "wind_direction_text", "weather", "weather_icon",
+                "weather_desc", "beach_image", "degrees",
+                "lat_lng", "rating"
+            ];
+
             for (const [key, value] of Object.entries(data)) {
-                if (["name","description","pk","log_id"].includes(key)) continue;
+                if (skipKeys.includes(key)) continue;
                 if (value === null || value === "" || typeof value === "undefined") continue;
 
-                if (key === "wind" || key === "wind_direction" || key === "weather" || key === "weather_code") {
-                    const wind = data.wind || "";
-                    const windDir = data.wind_direction || "";
-                    const weatherData = data.weather || "";
-                    const weatherCode = data.weather_code || "";
-                    html += `<li><strong>Wind-Direction:</strong> ${windDir} ${wind}; <strong>Weather Code:</strong> ${weatherCode} - ${weatherData}</li>`;
-                    break;
+                let displayValue = value;
+                if (typeof value === "boolean") {
+                    displayValue = value
+                        ? '<i class="bi bi-check2 confirmation-icon"></i>'
+                        : '<i class="bi bi-x confirmation-icon"></i>';
                 }
 
-                let displayValue = value;
-                if (typeof value === "boolean") displayValue = value ? "<i class=\"bi bi-check2\"></i>" : "<i class=\"bi bi-x\"></i>";
+                const translatedKey =
+                    keyTranslations[key] ||
+                    key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
-                const formattedKey = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-                html += `<li><strong>${formattedKey}:</strong> ${displayValue}</li>`;
+                html += `<li><strong>${translatedKey}:</strong> ${displayValue}</li>`;
             }
 
+            html += `</ul>`;
 
-            html += `</ul>
-                <button class="btn-red mt-3" onclick="openReportModal()">Докладвайте проблем <i class="bi bi-exclamation-octagon"></i></button>
-            `;
+            html += `<div class="weather-wind">
+                        <span><i class="${data.wind_direction_icon}"></i> ${data.wind_direction_text} ${data.wind} km/h</span>
+                        <span><i class="${data.weather_icon} weather-icon"></i> ${data.degrees}°C ${data.weather_desc}</span>
+                    </div>`;
+
+            html += `<button class="btn-red mt-3" onclick="openReportModal()">Докладвайте проблем <i class="bi bi-exclamation-octagon"></i></button>`;
+            html += `<button class="btn-primary" onclick="openLogsModal()">Подай отчет</a>`
 
             target.innerHTML = html;
         }
@@ -223,7 +249,10 @@
         const dragHandle = document.getElementById('drag-handle');
         if (dragHandle) dragHandle.addEventListener("click", closeInfo);
 
-        // BEACH APPENDING
+        function isOutsideBulgaria(lat, lng) {
+            return lat < 41.2 || lat > 44.2 || lng < 22.4 || lng > 28.6;
+        }
+
         map.on('load', () => {
             if (!Array.isArray(BEACHES_DATA)) BEACHES_DATA = [];
 
@@ -263,9 +292,15 @@
             map.on('zoom', updateMarkerVisibility);
         });
 
-        //* MARKERS
+        // MARKERS
         map.on('click', (e) => {
             const { lng, lat } = e.lngLat;
+
+
+            if (isOutsideBulgaria(lat, lng)) {
+                showPopupAlert(`Вие сте извън границите на България!`);
+                return;
+            }
 
             closeInfo();
 
@@ -308,13 +343,31 @@
                 map.setStyle(`https://api.jawg.io/styles/${newTheme}.json?access-token={{ jawg_token }}`);
             });
         }
+
     </script>
 
     <script>
-        dashboard = document.getElementById("dashboard")
-        map_nav_element = document.getElementById("nav-map") 
-        dashboard.className = ""
-        map_nav_element.className = "active"
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('nav ul li').forEach(item => {
+                item.classList.remove('active');
+            });
+            const map_nav_element = document.getElementById("nav-map");
+            if (map_nav_element) {
+                map_nav_element.classList.add("active");
+                const indicator = document.querySelector('.nav-indicator');
+                if (indicator && window.matchMedia('(min-width:601px)').matches) {
+                    const rect = map_nav_element.getBoundingClientRect();
+                    const navRect = map_nav_element.closest('nav').getBoundingClientRect();
+                    indicator.style.left = (rect.left - navRect.left) + 'px';
+                    indicator.style.top = (rect.top - navRect.top) + 'px';
+                    indicator.style.width = rect.width + 'px';
+                    indicator.style.height = rect.height + 'px';
+                    indicator.style.display = 'block';
+                }
+            }
+        });
     </script>
+
+
 </body>
 </html>

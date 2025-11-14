@@ -77,5 +77,33 @@
     {% endfor %}
 
     <a class="btn blue" href="{% url 'admin:index' %}">Назад към табло</a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navItems = document.querySelectorAll('nav ul li');
+            const currentPath = window.location.pathname;
+
+            navItems.forEach(item => {
+                item.classList.remove('active');
+
+                const link = item.querySelector('a');
+                if (link && link.getAttribute('href') === currentPath) {
+                    item.classList.add('active');
+
+                    const indicator = document.querySelector('.nav-indicator');
+                    if (indicator && window.matchMedia('(min-width:601px)').matches) {
+                        const rect = item.getBoundingClientRect();
+                        const navRect = item.closest('nav').getBoundingClientRect();
+                        indicator.style.left = (rect.left - navRect.left) + 'px';
+                        indicator.style.top = (rect.top - navRect.top) + 'px';
+                        indicator.style.width = rect.width + 'px';
+                        indicator.style.height = rect.height + 'px';
+                        indicator.style.display = 'block';
+                    }
+                }
+            });
+        });
+    </script>
+
 </body>
 </html>

@@ -1,0 +1,130 @@
+@import url(https://fonts.googleapis.com/css?family=Onest:100,200,300,regular,500,600,700,800,900);
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body{
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 0px 16px;
+    font-family: "Onest", sans-serif;
+    margin: 0;
+    background-color: #FBFBFB;
+}
+.account-wrapper{
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    color: #222222;
+}
+.account-quick-info{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.avatar-wrapper{
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    align-items: center;
+}
+.username-main{
+    font-weight: 600;
+    font-size: 36px;
+}
+.avatar-wrapper div{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.username-email{
+    font-size: 20px;
+    font-weight: 300;
+}
+.logout-btn{
+    font-weight: 600;
+    color: #222222;
+    display: flex;
+    gap: 6px;
+    font-size: 20px;
+    align-items: center;
+    text-decoration: none;
+    transition: 0.25s ease-in-out all;
+    margin-left: 8px;
+}
+.logout-btn i{
+    font-size: 18px;
+}
+.logout-btn:hover{
+    color: #E63946;
+}
+.pfp {
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.account-box{
+    width: 100%;
+    border: 1px solid #EEEEEE;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    border-radius: 10px;
+}
+.box-wrapper{
+    display: flex;
+    flex-direction: row;
+    gap: 96px;
+}
+.box-wrapper div{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.key{
+    color: #939393;
+    font-size: 14px;
+    font-weight: 300;
+    user-select: none;
+}
+.value{
+    color: #222222;
+    font-size: 16px;
+}
+/*
+    <div class="account-quick-info">
+        <div class="avatar-wrapper">
+            <img>
+            <div>
+                <p class="username-main">{{ username }}</p>
+                <p class="username-email">{{ email}}</p>
+            </div>
+        </div>
+    </div>
+*/
+
+@media(prefers-color-scheme: dark){
+    body{
+        background-color: #1C1C1C;
+        color: white;
+    }
+    .account-wrapper{
+        color: white;
+    }
+    .logout-btn{
+        color: white;
+    }
+    .account-box{
+        border: 1px solid #383838;
+    }
+    .key{
+        color: #989898;
+    }
+    .value{
+        color: white;
+    }
+}

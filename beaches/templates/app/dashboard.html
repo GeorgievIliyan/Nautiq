@@ -1,5 +1,6 @@
 {% load static %}
 {% load widget_tweaks %}
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,14 +30,6 @@
         </div>
     </div>
 
-    <!--
-    class MonthlyStats(models.Model):
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='monthly_stats')
-    month = models.DateField()
-    tasks_completed = models.PositiveIntegerField(default=0)
-    xp = models.PositiveIntegerField(default=0)
-    -->
-
     <div id="popup-alert-container"></div>
 
     <div class="dashboard-wrapper">
@@ -49,7 +42,7 @@
                             <i class="bi bi-trophy"></i>
                         </div>
                         <p>{{ lb.username }}</p>
-                        <span class="top-points">{{ lb.score }}k</span>
+                        <span class="top-points">{{ lb.score }}</span>
                     </div>
                     {% endfor %}
                 </div>
@@ -71,7 +64,7 @@
                                 <span class="user-stats">{{ lb.tasks_completed }}</span>
                             </div>
                         </div>
-                        <span class="score">{{ lb.score }}k</span>
+                        <span class="score">{{ lb.score | k_format }}</span>
                     </div>
                     {% endfor %}
                 </div>

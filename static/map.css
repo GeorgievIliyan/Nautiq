@@ -20,30 +20,40 @@ html, body {
 
 .info-panel {
     position: fixed;
-    top: 0;
-    right: 0;
-    width: 340px;
-    height: 100%;
+    top: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: 400px;
     background: #FBFBFB;
     color: #222222;
-    box-shadow: -2px 0 10px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    padding: 24px;
+    z-index: 9999;
+    transform: translateX(calc(100% + 32px));
+    transition: transform 0.25s ease-in-out, box-shadow 0.2s ease;
     overflow-y: auto;
-    transform: translateX(100%);
-    transition: transform 0.2s ease-in-out;
-    z-index: 1500;
-    padding: 32px;
-    border-radius: 10px;
-    background: linear-gradient(to bottom, #048FE6 0%, #FBFBFB 100%);
+    overflow-x: hidden;
+    scrollbar-width: none;
+    backdrop-filter: blur(6px);
+}
+
+.info-bottom::-webkit-scrollbar-button, .info-bottom::-webkit-scrollbar-track{
+    display: none;
 }
 .info-panel.visible { transform: translateX(0); }
 .info-panel #close-panel {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    top: 6px;
+    right: 6px;
     background: none;
     border: none;
-    font-size: 1.4rem;
+    font-size: 20px;
     cursor: pointer;
+    color: white !important;
+}
+.info-panel #close-panel:hover{
+    color: #E63946;
 }
 
 .info-bottom {
@@ -57,7 +67,6 @@ html, body {
     transition: transform 0.3s ease;
     border-radius: 10px 10px 0 0;
     z-index: 1500;
-    background: linear-gradient(to bottom, #048FE6 0%, #FBFBFB 100%);
 }
 .info-bottom.visible { transform: translateY(0); }
 #drag-handle {
@@ -84,40 +93,33 @@ html, body {
     transition: 0.25s ease-in-out all;
     font-size: 16px;
     display: flex;
-    gap: 4px;
+    gap: 6px;
 }
 .btn-red:hover{ 
     background: #d62839; 
 }
 
 .btn-primary {
-    background-color: #048FE6;
-    display: inline-flex;
+    background: #048FE6;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: 0.25s ease-in-out all;
+    font-size: 16px;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-    padding: 12px 20px;
-    position: relative;
-    border-radius: 10px;
-    overflow: hidden;
-    cursor: pointer;
-    border: none;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-    font-family: "Onest", sans-serif;
-    color: #ffffff;
-    font-size: 20px;
-    line-height: normal;
+    gap: 6px;
     width: fit-content;
-    font-weight: 300;
-}
-
-.btn-primary svg {
-    width: 27px;
-    height: 20px;
+    font-family: "Onest", sans-serif;
+    font-weight: 400;
 }
 
 .btn-primary:hover {
-    background-color: rgba(4, 143, 230, 0.9);
+    background: #037ACC;
 }
 
 .btn-primary:active {
@@ -127,6 +129,11 @@ html, body {
 .btn-primary:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.btn-primary svg {
+    width: 20px;
+    height: 20px;
 }
 
 .maplibregl-popup-content {
@@ -259,6 +266,36 @@ hr {
 .bi-star-fill{
     color: #F5B700;
 }
+
+.beach-image{
+    width: 100%;
+    aspect-ratio: 5/3;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+.info-panel-top{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 16px;
+}
+.weather-icon{
+    color: #F5B700;
+}
+.confirmation-icon{
+    font-size: 20px;
+}
+.hr{
+    margin-top: 8px;
+}
+.beach-desc{
+    margin-bottom: 8px;
+}
+.weather-wind{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 .map-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -267,18 +304,17 @@ hr {
     font-weight: 400;
     column-gap: 16px;
     margin-top: 16px;
+    margin-bottom: 16px;
 }
 
 @media(prefers-color-scheme: dark){
     .info-panel{
         color: #ffffff;
         background-color: #242424;
-        background: linear-gradient(to bottom, #1F2E3A 0%, #242424 100%);
     }
     .info-bottom{
         color: #ffffff;
         background-color: #242424;
-        background: linear-gradient(to bottom, #048FE6 0%, #048FE6 5%, #242424 5%, #242424 100%);
     }
     .maplibregl-popup-content{
         background-color: #242424;

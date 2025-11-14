@@ -1,78 +1,128 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bg">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nautiq</title>
-
-  <!-- Bootstrap 5.3 CSS & Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'styles.css' %}">
-  <!--Favicon-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nautiq | Моят акаунт</title>
+  <!-- CSS -->
+  <link rel="stylesheet" href="{% static 'alert.css' %}">
+  <link rel="stylesheet" href="{% static 'nav.css' %}">
+  <link rel="stylesheet" href="{% static 'account.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <!--FAVICON-->
   <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.svg' %}">
+
 </head>
-<body class="bg-light">
-
-  <div class="container-fluid">
-    <div class="row min-vh-100">  <!-- FULL HEIGHT ROW -->
-
-      <!-- Sidebar -->
-      <nav class="col-md-3 col-lg-2 d-md-block bg-primary text-white sidebar py-4 min-vh-100">
-        <div class="text-center mb-4 fw-bold fs-4">🌊 Sea Logger</div>
-        <ul class="nav flex-column">
-          <li class="nav-item">
-            <a class="nav-link text-white active" aria-current="page" href="{% url 'account' %}">
-              <i class="bi bi-person"></i> My Account
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link text-white" href="{% url 'map' %}">
-              <i class="bi bi-map"></i> Map
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link text-white" href="{% url 'my_logs' %}">
-              <i class="bi bi-journal-text"></i> My Logs
-            </a>
-          </li>
-        </ul>
-      </nav>
-
-      <!-- Main content -->
-      <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 d-flex align-items-center justify-content-center min-vh-100">
-        <div class="card shadow-lg w-100" style="max-width: 600px;">
-          <div class="card-header bg-primary text-white text-center fs-5 fw-semibold">
-            <i class="bi bi-person-circle"></i> My Account
-          </div>
-          <div class="card-body text-center">
-            <h3 class="fw-semibold">{{ user.username }}</h3>
-            <div class="mt-4 text-start px-4">
-              <p><span class="fw-semibold text-secondary">Email:</span> {{ user.email }}</p>
-              <p><span class="fw-semibold text-secondary">Member Since:</span> {{ user.date_joined }}</p>
-              <p><span class="fw-semibold text-secondary">XP:</span> {{ profile.xp }}</p>
-            </div>
-            <div class="d-flex justify-content-center gap-2 mt-4">
-              <button class="btn btn-outline-danger" onclick="history.back()">
-                <i class="bi bi-arrow-left"></i> Назад
-              </button>
-              <a href="{% url 'enter_mail' %}" class="btn btn-outline-primary">
-                <i class="bi bi-shield-lock"></i> Обнови парола
-              </a>
-            </div>
-          </div>
-          <div class="card-footer text-muted text-center">
-            Last updated: {{ user.last_login|date:"M Y" }}
-          </div>
+<body>
+  {% include 'app/components/navbar.html' %}
+  <div class="account-wrapper">
+    <div class="account-quick-info">
+      <div class="avatar-wrapper">
+        <img src="{{ pfp }}" class="pfp">
+        <div>
+          <p class="username-main">{{ username }}</p>
+          <p class="username-email">{{ email }}</p>
         </div>
-      </main>
-
+      </div>
+      <a href="{% url 'logout' %}" class="logout-btn">Излез <i class="bi bi-box-arrow-right"></i></a>
+    </div>
+    <div class="account-box">
+      <h3>Информация за акаунта</h3>
+      <div class="box-wrapper">
+        <div>
+          <p class="key">Потребителско име</p>
+          <p class="value">{{ username }}</p>
+        </div>
+        <div>
+          <p class="key">Емайл</p>
+          <p class="value">{{ email }}</p>
+        </div>
+        <div>
+          <p class="key">Прякор</p>
+          <p class="value">{{ nickname }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="account-box">
+      <h3>Други</h3>
+      <div class="box-wrapper">
+        <div>
+          <p class="key">Геогр. положение</p>
+          <p class="value">{{ lat }}, {{ lng }}</p>
+        </div>
+        <div>
+          <p class="key">Известия</p>
+          <p class="value">{{ notifs }}</p>
+        </div>
+        <div>
+          <p class="key">Тема</p>
+          <p class="value" id="theme"></p>
+        </div>
+        <div>
+          <p class="key">Език</p>
+          <p class="value">{{ profile.language }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="account-box">
+      <h3>Статистики</h3>
+      <div class="box-wrapper">
+        <div>
+          <p class="key">Изпълнени задачи</p>
+          <p class="value">{{ compl }}</p>
+        </div>
+        <div>
+          <p class="key">XP точки</p>
+          <p class="value">{{ xp }}</p>
+        </div>
+        <div>
+          <p class="key">Доклади</p>
+          <p class="value">{{ logs }}</p>
+        </div>
+        <div>
+          <p class="key">Ниво</p>
+          <p class="value">{{ level }}</p>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('nav ul li').forEach(item => {
+                item.classList.remove('active');
+            });
+            const account_nav_element = document.getElementById("nav-account");
+            if (account_nav_element) {
+                account_nav_element.classList.add("active");
+                const indicator = document.querySelector('.nav-indicator');
+                if (indicator && window.matchMedia('(min-width:601px)').matches) {
+                    const rect = account_nav_element.getBoundingClientRect();
+                    const navRect = account_nav_element.closest('nav').getBoundingClientRect();
+                    indicator.style.left = (rect.left - navRect.left) + 'px';
+                    indicator.style.top = (rect.top - navRect.top) + 'px';
+                    indicator.style.width = rect.width + 'px';
+                    indicator.style.height = rect.height + 'px';
+                    indicator.style.display = 'block';
+                }
+            }
+        });
+  </script>
+
+  <script src="{% static 'js/closeAlert.js' %}"></script>
+  <script src="{% static 'js/popupAlert.js' %}"></script>
+
+  <script>
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  let element = document.getElementById("theme")
+  if (prefersDark){
+    element.innerHTML = "Тъмна"
+  }
+  else{
+    element.innerHTML = "Светла"
+  }
+  </script>
+
 </body>
 </html>

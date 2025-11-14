@@ -1,6 +1,10 @@
+/* ================= BODY ================= */
 body{
     font-family: "Onest", sans-serif;
+    padding-bottom: 60px; /* so content isn't hidden behind bottom nav */
 }
+
+/* ================= NAVBAR ================= */
 nav{
     background-color: #EEEEEE;
     border-radius: 10px;
@@ -8,54 +12,51 @@ nav{
     width: fit-content;
     display: flex;
     justify-content: center;
-    position: relative;
+    position: relative; 
     overflow: hidden;
     margin: 16px auto;
     z-index: 990;
 }
+
 nav ul{
     display: flex;
     gap: 32px;
     list-style: none;
     font-size: 24px;
-    color: #C8C8C8;
+    color: #C8C8C8; 
     justify-content: space-evenly;
     margin: 0;
     padding: 0;
     width: 100%;
     align-items: center;
 }
-nav ul:last-child{
-    margin-right: 2px;
+
+nav ul li{
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
 }
-nav a{
-    text-decoration: none;
-    color: #C8C8C8;
-}
-nav svg {
-    width: 17px;
-    aspect-ratio: 1/1;
-    opacity: 0;
-    transform: translateY(3px);
-    transition: all 0.25s ease;
-    display: none;
-}
-nav ul li.active svg {
-    opacity: 1;
-    transform: translateY(0);
-}
-#selected{
-    background-color: #FBFBFB;
-    color: #048FE6;
-    border-radius: 10px;
+
+nav ul li a{
     display: flex;
-    gap: 8px;
-    padding: 8px;
     align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    z-index: 2;
+    position: relative;
+    transition: color 0.3s ease;
 }
-#selected svg{
-    display: block;
+
+/* Active state for text AND nav-text span */
+nav ul li.active a,
+nav ul li.active a .nav-text {
+    color: #048FE6;
 }
+
+/* Moving active background box (desktop) */
 .nav-indicator{
     position: absolute;
     background-color: #FBFBFB;
@@ -68,42 +69,94 @@ nav ul li.active svg {
                 width 0.28s cubic-bezier(.2,.9,.3,1),
                 height 0.28s cubic-bezier(.2,.9,.3,1);
     pointer-events: none;
-    box-sizing: border-box;
-}
-nav ul li{
-    position: relative;
-    z-index: 1;
-    cursor: pointer;
-    padding: 8px 12px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: color 0.3s ease;
-}
-nav ul li.active a, nav ul li.active{
-    color: #048FE6;
-}
-nav ul li.active svg{
-    display: block;
 }
 
+nav i { 
+    display: none; /* hidden on desktop */
+}
+
+/* ================= DARK MODE DESKTOP ================= */
 @media(prefers-color-scheme: dark){
+    nav{
+        background-color: #242424; 
+    }
+    nav a{
+        color: #656566;
+    }
+    nav ul li.active a,
+    nav ul li.active a .nav-text{
+        color: #048FE6;
+    }
     .nav-indicator{
         background-color: #1C1C1E;
     }
+}
+
+/* ================= MOBILE ================= */
+@media screen and (max-width: 600px) {
     nav{
-        background-color: #242424;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        margin: 0;
+        border-radius: 0; 
+        padding: 0;
+        z-index: 1000;
+        background-color: #EEEEEE; 
+        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); 
     }
-    nav a{
-        text-decoration: none;
-        color: #656566;
+    
+    .nav-indicator {
+        display: none !important;
     }
-    #selected{
-        background-color: #1C1C1E;
-        color: #048FE6;
+    
+    nav ul{
+        gap: 0;
+        height: 55px;
     }
-    nav ul li.active a, nav ul li.active{
-        color: #048FE6;
+    nav a {
+        flex-grow: 1; 
+        text-align: center;
+    }
+    nav ul li{
+        display: flex;
+        flex-direction: column; 
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+        height: 100%;
+        color: #C8C8C8; 
+        background-color: transparent !important; 
+    }
+
+    .nav-text{
+        display: none !important; 
+    }
+
+    nav i {
+        display: block; 
+        font-size: 24px; 
+    }
+
+    nav ul li.active a {
+        color: #048FE6; 
+    }
+
+    @media (prefers-color-scheme: dark){
+        nav{
+            background-color: #242424; 
+            box-shadow: 0 -2px 5px rgba(255, 255, 255, 0.05);
+        }
+        nav a{
+            color: #656566;
+        }
+        nav ul li{
+            color: #656566;
+        }
+        nav ul li.active a{
+            color: #048FE6;
+        }
     }
 }

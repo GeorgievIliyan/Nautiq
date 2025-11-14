@@ -254,7 +254,7 @@ form input {
 form input:-webkit-autofill,
 form textarea:-webkit-autofill {
     -webkit-box-shadow: 0 0 0px 1000px rgba(4, 143, 230, 0.05) inset;
-    -webkit-text-fill-color: white;
+    -webkit-text-fill-color: #222222;
     transition: background-color 5000s ease-in-out 0s;
 }
 
@@ -365,6 +365,9 @@ p.help-text{
 .form-section {
     height: 100vh;
 }
+.help-text{
+    color: #989898;
+}
 
 @media(max-width: 480px) {
     .auth-image {
@@ -429,4 +432,14 @@ p.help-text{
     p.help-text , .text-secondary {
         color: #989898;
     }
+    form input:-webkit-autofill,
+    form textarea:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0px 1000px rgba(4, 143, 230, 0.05) inset;
+        -webkit-text-fill-color: white;
+        transition: background-color 5000s ease-in-out 0s;
+    }
+    .help-text{
+        color: #939393;
+    }
+
 }

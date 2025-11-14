@@ -7,10 +7,10 @@
 }
 
 body {
-    padding: 32px;
+    padding: 0px 16px;
     font-family: "Onest", sans-serif;
     display: flex;
-    gap: 32px;
+    gap: 8px;
     flex-direction: column;
     margin: 0; 
     overflow-x: hidden;
@@ -19,7 +19,7 @@ body {
 .dashboard-wrapper {
     display: flex;
     flex-direction: row;
-    gap: 32px;
+    gap: 16px;
     flex: 1; 
 }
 
@@ -339,7 +339,7 @@ body {
 
     .dashboard-wrapper {
         flex-direction: column; 
-        gap: 24px;
+        gap: 16px;
         height: auto;
         flex: 0;
     }

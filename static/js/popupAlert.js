@@ -18,7 +18,7 @@ function showPopupAlert(message, type = 'danger', timeout = 4000) {
     icon.classList.add('bi', type === 'danger' ? 'bi-exclamation-octagon' : 'bi-check-lg');
     alertDiv.appendChild(icon);
 
-    const textSpan = document.createElement('span');
+    const textSpan = document.createElement('div');
     textSpan.textContent = message;
     alertDiv.appendChild(textSpan);
 

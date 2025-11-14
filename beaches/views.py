@@ -10,7 +10,9 @@ load_dotenv()
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from .utils import check_badges
 
+from django.db import transaction
 from django.http import HttpResponse
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash, get_user_model
@@ -38,6 +40,8 @@ from PIL import Image
 from validators.numbers_validator import is_valid_number as has_number
 from validators.uppercase_validator import is_valid_uppercase as has_uppercase
 from .utils import generate_daily_tasks as generate_tasks
+from .utils import assign_weather 
+from .utils import assign_wind
 
 # Local imports
 from . import forms
@@ -57,6 +61,20 @@ def is_first_login(user):
 def redirect_view(request):
     return redirect('dashboard')
 
+def format_k(value):
+    try:
+        num = int(value) 
+    except (ValueError, TypeError):
+        return str(value)
+    if num < 1000:
+        return str(num)
+    else:
+        thousands = num / 1000.0
+        formatted = "%.1f" % thousands
+        if formatted.endswith(".0"):
+            formatted = formatted[:-2]
+        return formatted + 'k'
+
 User = get_user_model()
 
 #* ===== MAILS ===== *#
@@ -74,8 +92,8 @@ def register_view(request):
             username = form.cleaned_data['username']
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
-            
-            #* Validation & Checks
+
+            # Validation checks
             if not has_uppercase(password):
                 messages.error(request, "Паролата трябва да съдържа поне 1 главна буква.")
                 return render(request, 'auth/register.html', {'form': form})
@@ -88,42 +106,49 @@ def register_view(request):
             if User.objects.filter(email=email).exists():
                 messages.error(request, "Този емайл е вече в употреба! Моля, използвайте друг.")
                 return render(request, 'auth/register.html', {'form': form})
-            
+
             try:
-                user = User.objects.create_user(
-                    username=username,
-                    password=password,
-                    email=email
-                )
-                user.is_active = False
-                user.save()
+                with transaction.atomic():
+                    user = User.objects.create_user(
+                        username=username,
+                        password=password,
+                        email=email
+                    )
+                    user.is_active = False
+                    user.save()
 
-                #* Token building
-                uid = urlsafe_base64_encode(force_bytes(user.pk))
-                token = default_token_generator.make_token(user)
-                
-                #* Confirmation link
-                confirmation_link = request.build_absolute_uri(
-                    reverse('activate', kwargs={'uidb64': uid, 'token': token})
-                )
-                
-                html_content = render_to_string('emails/confirm_account.html', {'username': username, 'confirmation_link': confirmation_link})
+                    profile = models.UserProfile.objects.create(
+                        user=user,
+                        nickname=None,
+                        lat=None,
+                        lng=None
+                    )
 
-                send_mail(
-                    subject= 'Потвърдете вашия акаунт в SeaSight',
-                    html_message=html_content,
-                    message=f'Здравей {username},\n\nМоля, потвърдете акаунта си като натиснете линка:\n{confirmation_link}\n\nБлагодарим! \nПоздрави: Екипа на SeaSight',
-                    recipient_list=[email],
-                    from_email= settings.DEFAULT_FROM_EMAIL,
-                    fail_silently=False,
-                )
+                    uid = urlsafe_base64_encode(force_bytes(user.pk))
+                    token = default_token_generator.make_token(user)
+                    confirmation_link = request.build_absolute_uri(
+                        reverse('activate', kwargs={'uidb64': uid, 'token': token})
+                    )
+                    html_content = render_to_string('emails/confirm_account.html', {
+                        'username': username,
+                        'confirmation_link': confirmation_link
+                    })
+
+                    send_mail(
+                        subject='Потвърдете вашия акаунт в SeaSight',
+                        html_message=html_content,
+                        message=f'Здравей {username},\n\nМоля, потвърдете акаунта си като натиснете линка:\n{confirmation_link}\n\nБлагодарим! \nПоздрави: Екипа на SeaSight',
+                        recipient_list=[email],
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        fail_silently=False,
+                    )
 
                 messages.success(request, "Регистрацията беше успешна! Моля, проверете имейла си, за да потвърдите акаунта.")
                 return redirect('login')
 
-            except Exception as user_register_error:
+            except Exception as e:
                 messages.error(request, "Не успяхме да създадем акаунт! Моля, опитайте отново.")
-                print(f"Error while registering user account: {user_register_error}")
+                print(f"Error while registering user account: {e}")
                 return render(request, 'auth/register.html', {'form': form})
     else:
         form = forms.RegisterForm()  
@@ -135,22 +160,19 @@ def enter_details(request):
     user = request.user
     if request.method == "POST":
         form = forms.UserPreferencesForm(request.POST)
-
         if form.is_valid():
             nickname = form.cleaned_data['nickname']
             lat = form.cleaned_data['lat']
             lng = form.cleaned_data['lng']
 
-            if models.UserProfile.objects.filter(nickname=nickname).exists():
+            if models.UserProfile.objects.filter(nickname=nickname).exclude(user=user).exists():
                 messages.error(request, "Този прякор е зает! Моля, използвайте друг.")
-                return render(request, 'auth/register.html', {'form': form})
+                return render(request, 'auth/enter_details.html', {'form': form})
 
             try:
-                models.UserProfile.objects.create(
+                profile, created = models.UserProfile.objects.update_or_create(
                     user=user,
-                    nickname=nickname,
-                    lat=lat,
-                    lng=lng
+                    defaults={'nickname': nickname, 'lat': lat, 'lng': lng}
                 )
 
                 user.is_first_login = False
@@ -160,7 +182,7 @@ def enter_details(request):
 
             except Exception as e:
                 messages.error(request, f"Възникна грешка: {str(e)}")
-                return render(request, 'auth/register.html', {'form': form})
+                return render(request, 'auth/enter_details.html', {'form': form})
     else:
         form = forms.UserPreferencesForm()
 
@@ -204,10 +226,22 @@ def login_view(request):
 
 @login_required
 def account_view(request):
-    app_user = request.user
+    user = request.user
+    profile = models.UserProfile.objects.get(user=user)
     context = {
-        "user": app_user,
-        "profile": models.UserProfile.objects.filter(user = app_user)
+        "user": user,
+        "profile": profile,
+        "email": user.email,
+        "username": user.username,
+        "nickname": profile.nickname,
+        "lat": profile.lat,
+        "lng": profile.lng,
+        "pfp": profile.profile_picture.url,
+        "level": profile.level,
+        "xp": profile.xp,
+        "compl": profile.tasks_completed,
+        "logs": models.BeachLog.objects.filter(user = user).count,
+        "notifs": "Включени" if profile.send_notifs else "Изключени"
     }
     return render(request, 'auth/account.html', context)
 
@@ -366,7 +400,7 @@ def dashboard(request):
         'user': user,
         'profile': profile,
         'monthly_stats': monthly_stats,
-        'leaderboard': leaderboard_data,
+        'leaderboard': leaderboard_data
     }
 
     if user.is_first_login:
@@ -412,15 +446,19 @@ def map_view(request):
                     
                     image_file = beach_add_form.cleaned_data.get("image")
                     if image_file:
-                        img = models.BeachImage.objects.create(
-                            beach=beach,
-                            user=user,
-                            image=image_file
-                        )
-                        print(f"[DEBUG] Created BeachImage for beach {beach.id}: {img}")
-                    
-                    messages.success(request, "Плажът е добавен успешно!", extra_tags="bg-success")
-                    return redirect("map")
+                        best_prompt, confidence, scores = get_clip_match(image_file, "beach or a shoreline")
+                        print(f"[DEBUG] CLIP match confidence: {confidence}")
+                        if confidence < 0.7:
+                            messages.error(request, "Снимката не е разпозната като плаж!")
+                        else:
+                            img = models.BeachImage.objects.create(
+                                beach=beach,
+                                user=user,
+                                image=image_file
+                            )
+                            print(f"[DEBUG] Created BeachImage for beach {beach.id}: {img}")
+                            messages.success(request, "Плажът е добавен успешно!", extra_tags="bg-success")
+                            return redirect("map")
                 
                 except Exception as e:
                     print(f"[ERROR] Adding beach failed: {e}")
@@ -511,12 +549,14 @@ def beach_data(request, beach_id):
     lat = beach.latitude
     lng = beach.longitude
     
-    beach_img = models.BeachImage.objects.get(beach = beach).image.url
+    beach_img = models.BeachImage.objects.get(beach=beach).image.url
     
-    weather_data = None
-    weather_code = None
-    wind = None
-    wind_direction = None
+    degrees = None
+    weather_desc = None
+    weather_icon = None
+    wind_speed = None
+    wind_dir_text = None
+    wind_dir_icon = None
     
     if lat and lng:
         session = requests.Session()
@@ -536,14 +576,21 @@ def beach_data(request, beach_id):
             response.raise_for_status()
             data = response.json()
             cw = data.get("current_weather", {})
-            weather_data = cw.get("temperature")
+
+            degrees = cw.get("temperature")
             weather_code = cw.get("weathercode")
-            wind = cw.get("windspeed")
-            wind_direction = cw.get("winddirection")
+            wind_speed = cw.get("windspeed")
+            wind_deg = cw.get("winddirection")
+
+            weather_desc, weather_icon = assign_weather(weather_code)
+            if wind_deg is not None:
+                wind_dir_text, wind_dir_icon = assign_wind(wind_deg)
+            else:
+                wind_dir_text, wind_dir_icon = "Няма информация", "bi-question-circle"
+
         except Exception as e:
             print("Open-Meteo API error:", e)
             messages.error(request, "Не успяхме да вземем информация за времето!")
-    
 
     response = {
         "pk": str(beach.pk),
@@ -561,10 +608,12 @@ def beach_data(request, beach_id):
         "has_toilets": beach.has_toilets,
         "has_changing_rooms": beach.has_changing_rooms,
         "times_logged": logs_count,
-        "degrees": weather_data,
-        "weather_code": weather_code,
-        "wind": wind,
-        "wind_direction": wind_direction
+        "degrees": degrees,
+        "weather_desc": weather_desc,
+        "weather_icon": weather_icon,
+        "wind": wind_speed,
+        "wind_direction_text": wind_dir_text,
+        "wind_direction_icon": wind_dir_icon
     }
 
     if logs_count:
@@ -703,6 +752,8 @@ def view_my_logs(request):
 
 #* ===== MISC VIEWS ===== *#
 def redirect_from_empty_link(request):
+    if is_moderator(request.user):
+        return redirect('dashboard_mod')
     return redirect('dashboard')
 
 def terms(request):
@@ -764,17 +815,17 @@ def handle_task_completion(sender, instance, created, **kwargs):
         task = instance.task
 
         profile.xp += task.reward
-        profile.missions_completed += 1
+        profile.tasks_completed += 1
         profile.save()
 
         today = timezone.now().date()
         first_of_month = today.replace(day=1)
         stats, _ = models.MonthlyStats.objects.get_or_create(user=profile, month=first_of_month)
         stats.xp += task.reward
-        stats.missions += 1
+        stats.tasks_completed += 1
         stats.save()
 
-        utils.check_badges(profile)
+        check_badges(profile)
 
 @login_required
 def complete_task(request, task_id):
@@ -804,27 +855,45 @@ def complete_task(request, task_id):
     if not os.path.exists(file_path):
         return HttpResponse(f"Error: The file does not exist at {file_path}", status=500)
 
-    task_description = accepted_task.task.description
-
+    # Run your image matching
+    task_description = accepted_task.task.description or ""
     best_match, confidence, scores = get_clip_match(file_path, task_description)
-
-    print(f"Best match: {best_match}")
-    print(f"Confidence: {confidence}")
-    print(f"All scores: {scores}")
-    print(f"Task description: {task_description}")
 
     verified = (best_match.lower() == task_description.lower()) and confidence > 0.25
 
-    print(f"Verification status: {verified}")
-
+    # Update AcceptedTask
     accepted_task.status = 'completed' if verified else 'failed'
     accepted_task.proof_image = saved_path
     accepted_task.verified = verified
     accepted_task.verification_confidence = confidence
+    accepted_task.completed_at = timezone.now()
     accepted_task.save()
 
     if verified:
+        try:
+            # XP based on difficulty
+            difficulty_xp = {'easy': 20, 'medium': 50, 'hard': 100}
+            reward_xp = difficulty_xp.get(accepted_task.task.difficulty, 10)
+
+            # Update user profile
+            profile.xp += reward_xp
+            profile.tasks_completed += 1
+            profile.save()
+
+            # Update monthly stats
+            month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            stats, _ = models.MonthlyStats.objects.get_or_create(user=profile, month=month_start)
+            stats.xp += reward_xp
+            stats.tasks_completed += 1
+            stats.save()
+            
+            check_badges(profile)
+
+        except Exception as e:
+            print("Error updating XP or stats:", e)
+
         return HttpResponse("✅ Задачата е потвърдена и завършена!", status=200)
+
     else:
         return HttpResponse("❌ Снимката не съвпада с описанието. Опитайте отново.", status=400)
 
