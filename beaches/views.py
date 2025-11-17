@@ -830,12 +830,14 @@ def handle_task_completion(sender, instance, created, **kwargs):
 @login_required
 def complete_task(request, task_id):
     if request.method != 'POST':
-        return HttpResponse("Методът не е позволен.", status=405)
+        messages.error(request, "Възникна грешка! Очаква се POST заявка.")
+        return redirect('tasks')
 
     try:
         profile = models.UserProfile.objects.get(user=request.user)
     except models.UserProfile.DoesNotExist:
-        return HttpResponse("User profile not found.", status=404)
+        messages.error(request, "Не успяхме да открием профил! Моля, опитайте отново!")
+        return redirect('tasks')
 
     accepted_task = get_object_or_404(
         models.AcceptedTask,
@@ -846,56 +848,45 @@ def complete_task(request, task_id):
 
     image = request.FILES.get('proof_image')
     if not image:
-        return HttpResponse("Моля, качете снимка.", status=400)
+        messages.error(request, "Нужна е снимка за потвърждение!")
+        return redirect('tasks')
 
     filename = f"{accepted_task.id}_proof_image_{image.name}"
     saved_path = default_storage.save(os.path.join('proof_images', filename), image)
     file_path = default_storage.path(saved_path)
 
     if not os.path.exists(file_path):
-        return HttpResponse(f"Error: The file does not exist at {file_path}", status=500)
+        return HttpResponse(f"Грешка: Файлът не съществува на {file_path}", status=500)
 
-    # Run your image matching
     task_description = accepted_task.task.description or ""
     best_match, confidence, scores = get_clip_match(file_path, task_description)
 
     verified = (best_match.lower() == task_description.lower()) and confidence > 0.25
-
-    # Update AcceptedTask
-    accepted_task.status = 'completed' if verified else 'failed'
+    
     accepted_task.proof_image = saved_path
     accepted_task.verified = verified
     accepted_task.verification_confidence = confidence
     accepted_task.completed_at = timezone.now()
-    accepted_task.save()
 
     if verified:
+        accepted_task.status = 'completed'
+        accepted_task.save()
+        difficulty_xp = {'easy': 20, 'medium': 50, 'hard': 100}
+        reward_xp = difficulty_xp.get(accepted_task.task.difficulty, 10)
         try:
-            # XP based on difficulty
-            difficulty_xp = {'easy': 20, 'medium': 50, 'hard': 100}
-            reward_xp = difficulty_xp.get(accepted_task.task.difficulty, 10)
-
-            # Update user profile
-            profile.xp += reward_xp
-            profile.tasks_completed += 1
-            profile.save()
-
-            # Update monthly stats
-            month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            stats, _ = models.MonthlyStats.objects.get_or_create(user=profile, month=month_start)
-            stats.xp += reward_xp
-            stats.tasks_completed += 1
-            stats.save()
-            
             check_badges(profile)
-
         except Exception as e:
-            print("Error updating XP or stats:", e)
+            print(f"[WARNING] Badge check failed: {e}")
 
-        return HttpResponse("✅ Задачата е потвърдена и завършена!", status=200)
+        messages.success(request, f"Ура! Успешно изпълнена задача! Спечелихте {reward_xp} XP.")
+        return redirect('tasks')
 
     else:
-        return HttpResponse("❌ Снимката не съвпада с описанието. Опитайте отново.", status=400)
+        accepted_task.status = 'accepted'
+        accepted_task.save()
+        
+        messages.error(request, "Снимката не съвпада с описанието на задачата! Уверете се, че снимката е ясна и опитайте отново.")
+        return redirect('tasks')
 
 
 @login_required

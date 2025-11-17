@@ -10,7 +10,7 @@ if (!popupAlertContainer) {
  * @param {'danger'|'success'} type - Type of alert
  * @param {number} timeout - Time in ms before disappearing
  */
-function showPopupAlert(message, type = 'danger', timeout = 4000) {
+function showPopupAlert(message, type = 'danger', timeout = 10000) {
     const alertDiv = document.createElement('div');
     alertDiv.classList.add(`popup-alert-${type}`);
 
