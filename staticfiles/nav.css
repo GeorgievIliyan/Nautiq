@@ -1,0 +1,162 @@
+/* ================= BODY ================= */
+body{
+    font-family: "Onest", sans-serif;
+    padding-bottom: 60px; /* so content isn't hidden behind bottom nav */
+}
+
+/* ================= NAVBAR ================= */
+nav{
+    background-color: #EEEEEE;
+    border-radius: 10px;
+    padding: 8px;
+    width: fit-content;
+    display: flex;
+    justify-content: center;
+    position: relative; 
+    overflow: hidden;
+    margin: 16px auto;
+    z-index: 990;
+}
+
+nav ul{
+    display: flex;
+    gap: 32px;
+    list-style: none;
+    font-size: 24px;
+    color: #C8C8C8; 
+    justify-content: space-evenly;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    align-items: center;
+}
+
+nav ul li{
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
+}
+
+nav ul li a{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    z-index: 2;
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+/* Active state for text AND nav-text span */
+nav ul li.active a,
+nav ul li.active a .nav-text {
+    color: #048FE6;
+}
+
+/* Moving active background box (desktop) */
+.nav-indicator{
+    position: absolute;
+    background-color: #FBFBFB;
+    border-radius: 10px;
+    z-index: 0;
+    left: 0;
+    top: 0;
+    transition: left 0.28s cubic-bezier(.2,.9,.3,1),
+                top 0.28s cubic-bezier(.2,.9,.3,1),
+                width 0.28s cubic-bezier(.2,.9,.3,1),
+                height 0.28s cubic-bezier(.2,.9,.3,1);
+    pointer-events: none;
+}
+
+nav i { 
+    display: none; /* hidden on desktop */
+}
+
+/* ================= DARK MODE DESKTOP ================= */
+@media(prefers-color-scheme: dark){
+    nav{
+        background-color: #242424; 
+    }
+    nav a{
+        color: #656566;
+    }
+    nav ul li.active a,
+    nav ul li.active a .nav-text{
+        color: #048FE6;
+    }
+    .nav-indicator{
+        background-color: #1C1C1E;
+    }
+}
+
+/* ================= MOBILE ================= */
+@media screen and (max-width: 600px) {
+    nav{
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        margin: 0;
+        border-radius: 0; 
+        padding: 0;
+        z-index: 1000;
+        background-color: #EEEEEE; 
+        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); 
+    }
+    
+    .nav-indicator {
+        display: none !important;
+    }
+    
+    nav ul{
+        gap: 0;
+        height: 55px;
+    }
+    nav a {
+        flex-grow: 1; 
+        text-align: center;
+    }
+    nav ul li{
+        display: flex;
+        flex-direction: column; 
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+        height: 100%;
+        color: #C8C8C8; 
+        background-color: transparent !important; 
+    }
+
+    .nav-text{
+        display: none !important; 
+    }
+
+    nav i {
+        display: block; 
+        font-size: 24px; 
+    }
+
+    nav ul li.active a {
+        color: #048FE6; 
+    }
+
+    @media (prefers-color-scheme: dark){
+        nav{
+            background-color: #242424; 
+            box-shadow: 0 -2px 5px rgba(255, 255, 255, 0.05);
+        }
+        nav a{
+            color: #656566;
+        }
+        nav ul li{
+            color: #656566;
+        }
+        nav ul li.active a{
+            color: #048FE6;
+        }
+    }
+}
