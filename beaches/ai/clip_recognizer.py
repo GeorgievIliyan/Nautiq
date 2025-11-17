@@ -3,14 +3,24 @@ from PIL import Image
 import torch
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
-processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+
+_model = None
+_processor = None
+
+def _load_clip():
+    global _model, _processor
+    if _model is None or _processor is None:
+        print("Loading CLIP model...")  # optional log
+        _model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
+        _processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+        print("CLIP model loaded!")
 
 def get_clip_match(image_path, text_prompt: str):
     """
     Compare an image with a text description using CLIP, adding
     neutral/negative prompts to avoid overconfident 1.0 scores.
     """
+    _load_clip()
 
     text_prompts = [
         text_prompt,
@@ -20,11 +30,11 @@ def get_clip_match(image_path, text_prompt: str):
     ]
 
     image = Image.open(image_path)
-    inputs = processor(text=text_prompts, images=image, return_tensors="pt", padding=True)
+    inputs = _processor(text=text_prompts, images=image, return_tensors="pt", padding=True)
     inputs = {k: v.to(device) for k, v in inputs.items()}
 
     with torch.no_grad():
-        outputs = model(**inputs)
+        outputs = _model(**inputs)
         logits_per_image = outputs.logits_per_image
         probs = logits_per_image.softmax(dim=1)[0]
 
