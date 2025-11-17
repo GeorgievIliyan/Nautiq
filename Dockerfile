@@ -5,11 +5,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY manage.py .
 COPY sea_sight/ ./sea_sight/
 COPY beaches/ ./beaches/
-COPY templates/ ./templates/
+COPY beaches/templates/ ./templates/   # <--- правилният път
 COPY static/ ./static/
-COPY manage.py .
 
 RUN python manage.py collectstatic --noinput || true
 
