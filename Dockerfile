@@ -9,6 +9,7 @@ COPY sea_sight/ ./sea_sight/
 COPY beaches/ ./beaches/
 COPY templates/ ./templates/
 COPY static/ ./static/
+COPY manage.py .
 
 RUN python manage.py collectstatic --noinput || true
 
