@@ -7,20 +7,18 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 _model = None
 _processor = None
 
-def _load_clip():
-    global _model, _processor
-    if _model is None or _processor is None:
-        print("Loading CLIP model...")  # optional log
-        _model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
-        _processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
-        print("CLIP model loaded!")
-
 def get_clip_match(image_path, text_prompt: str):
     """
-    Compare an image with a text description using CLIP, adding
-    neutral/negative prompts to avoid overconfident 1.0 scores.
+    Compare an image with a text description using CLIP.
+    Lazy-loads model and processor to avoid blocking server start.
     """
-    _load_clip()
+    global _model, _processor
+
+    if _model is None or _processor is None:
+        print("[INFO] Loading CLIP model for the first time...")
+        _model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
+        _processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+        print("[INFO] CLIP model loaded.")
 
     text_prompts = [
         text_prompt,
@@ -43,10 +41,5 @@ def get_clip_match(image_path, text_prompt: str):
     confidence = float(probs[best_idx])
 
     scores = {p: float(probs[i]) for i, p in enumerate(text_prompts)}
-
-    print(f"Logits: {logits_per_image}")
-    print(f"Probabilities: {probs}")
-    print(f"Best prompt: {best_prompt}")
-    print(f"Confidence: {confidence}")
 
     return best_prompt, confidence, scores
