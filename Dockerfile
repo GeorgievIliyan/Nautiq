@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY manage.py .
 COPY sea_sight/ ./sea_sight/
 COPY beaches/ ./beaches/
-COPY beaches/templates/ ./templates/   # <--- правилният път
+COPY beaches/templates/ ./templates/
 COPY static/ ./static/
 
 RUN python manage.py collectstatic --noinput || true
