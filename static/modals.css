@@ -183,6 +183,10 @@
     -webkit-text-fill-color: #222222;
     transition: background-color 5000s ease-in-out 0s;
 }
+.modal-inline-input{
+    display: flex;
+    gap: 4px;
+}
 .modal-input-group input, .modal-input-group textarea{
     border-radius: 7.5px;
     padding: 8px;

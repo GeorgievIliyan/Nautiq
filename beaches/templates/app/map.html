@@ -60,7 +60,7 @@
     <div id="popup-alert-container"></div>
 
     {% if messages %}
-        <div id="django-messages" style="display:none;">
+        <div id="django-messages">
             {% for message in messages %}
                 <div class="django-message" data-level="{{ message.tags }}">{{ message }}</div>
             {% endfor %}
@@ -85,21 +85,6 @@
 
     <script src="{% static 'js/mapModals.js' %}"></script>
     <script src="{% static 'js/popupAlert.js' %}"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const messageElements = document.querySelectorAll('#django-messages .django-message');
-
-            messageElements.forEach(el => {
-                const text = el.textContent.trim();
-                let level = el.dataset.level || 'danger';
-                if (level.includes('success')) level = 'success';
-                else level = 'danger';
-
-                showPopupAlert(text, level, 4000);
-            });
-        });
-    </script>
 
     <!--MAPLIBRE-->
     <script>
@@ -126,7 +111,7 @@
             }
         }
 
-        const MIN_DISTANCE_METERS = 50;
+        const MIN_DISTANCE_METERS = 250;
         const MIN_MARKER_ZOOM = 10;
 
         const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -230,7 +215,7 @@
                     </div>`;
 
             html += `<button class="btn-red mt-3" onclick="openReportModal()">Докладвайте проблем <i class="bi bi-exclamation-octagon"></i></button>`;
-            html += `<button class="btn-primary" onclick="openLogsModal()">Подай отчет</a>`
+            html += `<button class="btn-primary" onclick="openLogsModal(${data.id})">Подай отчет</button>`;
 
             target.innerHTML = html;
         }
@@ -280,6 +265,9 @@
                         if (latInput) latInput.value = data.latitude ?? beach.latitude ?? lat;
                         if (lngInput) lngInput.value = data.longitude ?? beach.longitude ?? lng;
 
+                        const beachInput = document.getElementById("id_beach");
+                        if (beachInput) beachInput.value = beach.id;
+
                         openInfo(data);
                     } catch (err) {
                         console.error("Error fetching beach data:", err);
@@ -287,6 +275,7 @@
                         safeAddClass(infoPanel, "visible");
                     }
                 });
+
             });
 
             updateMarkerVisibility();
@@ -368,7 +357,6 @@
             }
         });
     </script>
-
 
 </body>
 </html>

@@ -152,6 +152,10 @@
     transform: translateY(0);
 }
 
+#django-messages{
+    display: none !important;
+}
+
 @media (prefers-color-scheme: dark) {
     .popup-alert-danger,
     .popup-alert-success {

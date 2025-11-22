@@ -86,15 +86,16 @@ MESSAGE_TAGS = {
 WSGI_APPLICATION = 'sea_sight.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://nautiq-production.up.railway.app',
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -138,6 +139,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -158,7 +160,7 @@ if os.getenv("ENVIRONMENT") == "production":
     EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
-    DEFAULT_FROM_EMAIL = f"SeaSight <{EMAIL_HOST_USER}>"
+    DEFAULT_FROM_EMAIL = f"Nautiq <{EMAIL_HOST_USER}>"
     ACCOUNT_EMAIL_SUBJECT_PREFIX = ""
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

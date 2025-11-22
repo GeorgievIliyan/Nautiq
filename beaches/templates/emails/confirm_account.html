@@ -3,41 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Activate Your Account</title>
+    <title>Activate Your Account | Активирай акаунта</title>
+    <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
-<body style="font-family: 'Inter', Arial, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0;">
+<body style="font-family: 'Onest', Arial, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0;">
+
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 auto; background-color: #f8f9fa;">
         <tr>
-            <td align="center" style="padding: 30px 20px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 0.5rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);">
+            <td align="center" style="padding: 32px 16px;">
+
+                <!-- Main container | Основна кутия -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05); border: 1px solid #e0e0e0;">
                     <tr>
-                        <td style="padding: 2rem;">
-                            <h1 style="color: #0d6efd; font-size: 1.75rem; font-weight: 600; margin: 0 0 1rem; text-align: center;">
+                        <td style="padding: 32px;">
+
+                            <!-- Header | Заглавие -->
+                            <h1 style="color: #048FE6; font-size: 28px; font-weight: 600; margin: 0 0 16px; text-align: center;">
                                 Добре дошли на борда!
                             </h1>
 
-                            <p style="color: #495057; font-size: 1rem; line-height: 1.6; margin: 0 0 1.5rem;">
-                                Благодарим, че се присъединихте към SeaSight! Моля изпълнете последната стъпка, за да използвате всички функции:
+                            <!-- Intro text | Встъпителен текст -->
+                            <p style="color: #495057; font-size: 16px; line-height: 24px; margin: 0 0 24px;">
+                                Благодарим, че се присъединихте към Nautiq! Моля, завършете последната стъпка, за да използвате всички функции:
                             </p>
-                            
+
+                            <!-- Call-to-action button | Бутон за активиране -->
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
-                                    <td align="center" style="padding: 1rem 0;">
+                                    <td align="center" style="padding: 16px 0;">
                                         <a href="{{ confirmation_link }}" 
-                                            target="_blank" 
-                                            style="display: inline-block; 
-                                                    padding: 0.75rem 1.5rem; /* Replicating btn-lg padding */
-                                                    font-size: 1.1rem; 
-                                                    font-weight: 500; 
-                                                    color: #ffffff; 
-                                                    background-color: #0d6efd; /* Bootstrap primary blue */
-                                                    border: 1px solid #0d6efd;
-                                                    border-radius: 0.3rem; 
-                                                    text-decoration: none; 
-                                                    box-shadow: 0 0.125rem 0.25rem rgba(13, 110, 253, 0.4);">
+                                            target="_blank"
+                                            style="display: inline-block;
+                                                    padding: 16px 32px; /* 16/32px spacing */
+                                                    font-size: 18px;
+                                                    font-weight: 500;
+                                                    color: #ffffff;
+                                                    background: linear-gradient(to right, #048FE6, #04B4F0);
+                                                    border: none;
+                                                    border-radius: 8px;
+                                                    text-decoration: none;
+                                                    box-shadow: 0 4px 8px rgba(4, 143, 230, 0.4);">
                                             Активирай
-
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16" style="margin-left: 8px;">
                                                 <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/>
                                             </svg>
                                         </a>
@@ -45,13 +52,14 @@
                                 </tr>
                             </table>
 
-                            <p style="color: #6c757d; font-size: 0.875rem; line-height: 1.6; margin-top: 1.5rem; border-top: 1px solid #e9ecef; padding-top: 1.5rem;">
-                                Tози емайл е важен за сигурността на нашата общност. Ако не сте създавали този акаунт, може спокойно да игнорирате този емайл.
+                            <!-- Footer text | Текст в края -->
+                            <p style="color: #6c757d; font-size: 14px; line-height: 20px; margin-top: 24px; border-top: 1px solid #e9ecef; padding-top: 16px;">
+                                Този имейл е важен за сигурността на нашата общност. Ако не сте създавали този акаунт, може да игнорирате този имейл.
                             </p>
-                            
-                            <p style="color: #6c757d; font-size: 0.875rem; line-height: 1.6; text-align: center;">
-                                Ако изпитвате затруднения с този бутон може да копирате линк и да го поставите във вашия браузър:<br>
-                                <a href="{{ confirmation_link }}" style="color: #0d6efd; text-decoration: none; word-break: break-all;">
+
+                            <p style="color: #6c757d; font-size: 14px; line-height: 20px; text-align: center; margin-top: 16px;">
+                                Ако изпитвате затруднения с бутона, може да копирате линк и да го поставите във вашия браузър:<br>
+                                <a href="{{ confirmation_link }}" style="color: #048FE6; text-decoration: none; word-break: break-all;">
                                     {{ confirmation_link }}
                                 </a>
                             </p>
@@ -59,8 +67,10 @@
                         </td>
                     </tr>
                 </table>
+
             </td>
         </tr>
     </table>
+
 </body>
 </html>

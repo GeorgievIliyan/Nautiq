@@ -9,6 +9,7 @@ urlpatterns = [
     path('auth/logout/confirm', views.logout_view, name='logout'),
     path('account/', views.account_view, name='account'),
     path('password-reset/', views.reset_password, name="reset_password"),
+    path('account/delete/', views.delete_account, name="delete_account"),
     #* EMAIL CONFIRMATION/RESETTING RELATED:
     path('activate/<uidb64>/<token>/', views.activate, name='activate'),
     path("password/reset/enter-mail/", views.enter_mail, name="enter_mail"),

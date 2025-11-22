@@ -8,7 +8,7 @@ body{
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 0px 16px;
+    padding: 0px 64px;
     font-family: "Onest", sans-serif;
     margin: 0;
     background-color: #FBFBFB;
@@ -95,18 +95,12 @@ body{
     color: #222222;
     font-size: 16px;
 }
-/*
-    <div class="account-quick-info">
-        <div class="avatar-wrapper">
-            <img>
-            <div>
-                <p class="username-main">{{ username }}</p>
-                <p class="username-email">{{ email}}</p>
-            </div>
-        </div>
-    </div>
-*/
-
+.text-green{
+    color: #2ECC71 !important;
+}
+.text-red{
+    color: #E63946 !important;
+}
 @media(prefers-color-scheme: dark){
     body{
         background-color: #1C1C1C;

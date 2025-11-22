@@ -35,6 +35,7 @@ class Task(models.Model):
     date_assigned = models.DateField(null=True, blank=True)
     reward = models.PositiveIntegerField(default=10)
     is_daily = models.BooleanField(default=False)
+    icon = models.CharField(null=True, blank=True, default="bi bi-bullseye")
 
     def __str__(self):
         return f"{self.title} ({self.difficulty})"
@@ -52,7 +53,7 @@ class UserProfile(models.Model):
         upload_to='profile_images/',
         blank=True,
         null=True,
-        default='profile_images/default.svg'
+        default=None
     )
 
     # GEO LOCATION
@@ -71,8 +72,7 @@ class UserProfile(models.Model):
     # GAMIFICATION
     @property
     def level(self):
-        """Compute level from XP"""
-        return int(0.1 * math.sqrt(self.xp))
+        return max(1, int(0.1 * math.sqrt(self.xp)))
 
     @property
     def xp_for_next_level(self):

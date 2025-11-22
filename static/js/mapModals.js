@@ -5,6 +5,7 @@ const reportModal = document.getElementById('report-beach-modal');
 
 function hideAllModals() {
     document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+    if (overlay) overlay.style.display = 'none';
 }
 
 function openAddModal() {
@@ -13,8 +14,12 @@ function openAddModal() {
     overlay.style.display = 'flex';
 }
 
-function openLogsModal() {
+function openLogsModal(beachId = null) {
     hideAllModals();
+    if (beachId && logModal) {
+        const beachInput = logModal.querySelector('input[name="beach"]');
+        if (beachInput) beachInput.value = beachId;
+    }
     logModal.style.display = 'flex';
     overlay.style.display = 'flex';
 }
@@ -40,13 +45,15 @@ function closeReportModal() {
     overlay.style.display = 'none';
 }
 
-overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-        overlay.style.display = 'none';
-        hideAllModals();
-    }
-});
+if (overlay) {
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) hideAllModals();
+    });
+}
 
 window.openAddModal = openAddModal;
 window.openLogsModal = openLogsModal;
-window.openR
+window.openReportModal = openReportModal;
+window.closeAddModal = closeAddModal;
+window.closeLogsModal = closeLogsModal;
+window.closeReportModal = closeReportModal;

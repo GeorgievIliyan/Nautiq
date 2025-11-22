@@ -1,79 +1,91 @@
 import json
-from datetime import date
-import random
 import os
+import random
+from datetime import date
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()  # Load environment variables from .env | Зареждане на променливи от .env файл
 
-# Django imports
+# Django imports | Django импорти
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import (
+    authenticate,
+    login,
+    logout,
+    update_session_auth_hash,
+    get_user_model
+)
+from django.contrib.auth.decorators import user_passes_test, login_required
+from django.contrib.auth.tokens import default_token_generator
+from django.core.files.storage import default_storage
+from django.core.mail import send_mail
+from django.db import transaction
+from django.db.models import Count
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+import django.utils as utils
+from django.templatetags.static import static
+
+# Third-party imports | Външни библиотеки
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from .utils import check_badges
-
-from django.db import transaction
-from django.http import HttpResponse
-from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout, update_session_auth_hash, get_user_model
-from django.contrib.auth.decorators import user_passes_test, login_required
-from django.core.mail import send_mail
-from django.core.files.storage import default_storage
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
-from django.utils.http import urlsafe_base64_decode
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from django.urls import reverse
-from django.db.models import Count
-from django.conf import settings
-from django.template.loader import render_to_string
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-import django.utils as utils
-from beaches.ai.clip_recognizer import get_clip_match
 from PIL import Image
-
-# Third-party imports
 from validators.numbers_validator import is_valid_number as has_number
 from validators.uppercase_validator import is_valid_uppercase as has_uppercase
-from .utils import generate_daily_tasks as generate_tasks
-from .utils import assign_weather 
-from .utils import assign_wind
+from difflib import SequenceMatcher
+import uuid
 
-# Local imports
-from . import forms
-from . import models
+# Local imports | Локални импорти
+from . import forms, models
+from .utils import (
+    check_badges,
+    generate_daily_tasks as generate_tasks,
+    assign_weather,
+    assign_wind
+)
+from beaches.ai.clip_recognizer import get_clip_match
 
-today_dt = timezone.localdate()
-aware_datetime = timezone.now()
+# Globals | Глобални променливи
+today_dt = timezone.localdate()  # Current local date | Текуща локална дата
+aware_datetime = timezone.now()  # Current aware datetime | Текущо осъзнато време
+User = get_user_model()  # Custom user model | Потребителски модел
 
+# Utility functions | Полезни функции
 def is_moderator(user):
-    return user.is_staff
+    return user.is_staff  # Check if user is staff | Проверка дали потребителят е модератор
 
 def is_first_login(user):
-    if user.is_first_login== True:
-        return True
-    else: False
-    
+    return user.is_first_login is True  # Check first login flag | Проверка за първо влизане
+
 def redirect_view(request):
-    return redirect('dashboard')
+    return redirect('dashboard')  # Redirect to dashboard | Пренасочване към таблото
 
 def format_k(value):
+    """
+    Format number to short form: 1000 -> 1k, 1500 -> 1.5k | Форматира число в кратък вид
+    """
     try:
-        num = int(value) 
+        num = int(value)
     except (ValueError, TypeError):
         return str(value)
+
     if num < 1000:
         return str(num)
-    else:
-        thousands = num / 1000.0
-        formatted = "%.1f" % thousands
-        if formatted.endswith(".0"):
-            formatted = formatted[:-2]
-        return formatted + 'k'
+
+    thousands = num / 1000.0
+    formatted = "%.1f" % thousands
+    if formatted.endswith(".0"):
+        formatted = formatted[:-2]
+    return formatted + 'k'
 
 User = get_user_model()
 
@@ -228,6 +240,11 @@ def login_view(request):
 def account_view(request):
     user = request.user
     profile = models.UserProfile.objects.get(user=user)
+    if profile.profile_picture:
+        pfp_url = profile.profile_picture.url
+    else:
+        pfp_url = static("default.webp") 
+
     context = {
         "user": user,
         "profile": profile,
@@ -236,7 +253,7 @@ def account_view(request):
         "nickname": profile.nickname,
         "lat": profile.lat,
         "lng": profile.lng,
-        "pfp": profile.profile_picture.url,
+        "pfp": pfp_url,
         "level": profile.level,
         "xp": profile.xp,
         "compl": profile.tasks_completed,
@@ -368,6 +385,14 @@ def activate(request, uidb64, token):
     else:
         messages.error(request, "Невалиден или изтекъл линк за потвърждение.")
         return redirect('register')
+    
+@login_required
+def delete_account(request):
+    if request.method == "POST":
+        user = request.user
+        models.UserProfile.objects.get(user = user).delete()
+        models.User.objects.get(user = user).delete()
+    return redirect("login")
 
 #* ================= APP ================= *#
 @login_required
@@ -383,24 +408,53 @@ def dashboard(request):
         defaults={'tasks_completed': 0, 'xp': 0}
     )
 
+    previous_stats = models.MonthlyStats.objects.filter(
+        user=profile
+    ).exclude(month=current_month).order_by('-month').first()
+
+    def build_change(prev, curr, field):
+        if not prev:
+            return {"percent": "+0%", "is_up": True}
+
+        prev_val = getattr(prev, field)
+        curr_val = getattr(curr, field)
+
+        if prev_val == 0:
+            return {"percent": "+0%", "is_up": curr_val > 0}
+
+        diff = round(((curr_val - prev_val) / prev_val) * 100)
+        is_up = diff >= 0
+        percent_str = f"{'+' if diff >= 0 else ''}{diff}%"
+
+        return {"percent": percent_str, "is_up": is_up}
+
+    xp_change = build_change(previous_stats, monthly_stats, "xp")
+    tasks_change = build_change(previous_stats, monthly_stats, "tasks_completed")
+
     leaderboard = models.MonthlyStats.objects.filter(month=current_month).order_by('-xp')[:10]
 
     leaderboard_data = []
     for idx, stats in enumerate(leaderboard, start=1):
         leaderboard_data.append({
             'place': f"#{idx}",
-            'username': user.username,
+            'username': stats.user.user.username,
             'score': stats.xp,
             'tasks_completed': stats.tasks_completed,
             'is_current_user': stats.user == profile,
-            'profile_img': stats.user.profile_img_url if hasattr(stats.user, 'profile_img_url') else "https://tinyurl.com/bdz6jnxj"
+            'profile_img': (
+                stats.user.profile_img_url
+                if hasattr(stats.user, 'profile_img_url')
+                else "https://tinyurl.com/bdz6jnxj"
+            )
         })
 
     context = {
         'user': user,
         'profile': profile,
         'monthly_stats': monthly_stats,
-        'leaderboard': leaderboard_data
+        'leaderboard': leaderboard_data,
+        'xp_change': xp_change,
+        'tasks_change': tasks_change,
     }
 
     if user.is_first_login:
@@ -427,7 +481,9 @@ def map_view(request):
         
         if form_type == "add_beach":
             beach_add_form = forms.BeachAddForm(request.POST, request.FILES)
+
             if beach_add_form.is_valid():
+                beach = None
                 try:
                     beach = models.Beach.objects.create(
                         name=beach_add_form.cleaned_data["name"],
@@ -442,38 +498,93 @@ def map_view(request):
                         has_paid_zone=beach_add_form.cleaned_data["has_paid_zone"],
                         has_beach_bar=beach_add_form.cleaned_data["has_beach_bar"],
                     )
-                    print(f"[DEBUG] Created Beach: {beach}")
-                    
+                    print(f"[DEBUG] Created Beach (pending image validation): {beach}")
+
                     image_file = beach_add_form.cleaned_data.get("image")
+
                     if image_file:
-                        best_prompt, confidence, scores = get_clip_match(image_file, "beach or a shoreline")
+                        image_pil = Image.open(image_file).convert("RGB")
+                        
+                        prompts = ["beach or shoreline or coast"]
+                        
+                        best_prompt, confidence, scores = get_clip_match(image_pil, prompts)
                         print(f"[DEBUG] CLIP match confidence: {confidence}")
-                        if confidence < 0.7:
-                            messages.error(request, "Снимката не е разпозната като плаж!")
-                        else:
-                            img = models.BeachImage.objects.create(
-                                beach=beach,
-                                user=user,
-                                image=image_file
-                            )
-                            print(f"[DEBUG] Created BeachImage for beach {beach.id}: {img}")
-                            messages.success(request, "Плажът е добавен успешно!", extra_tags="bg-success")
+
+                        VERIFICATION_THRESHOLD = 0.5 
+                        
+                        if confidence < VERIFICATION_THRESHOLD:
+                            messages.error(request, "Снимката не беше разпозната като плаж! Моля, качете ясна снимка на плажа.")
+                            if beach:
+                                beach.delete()
                             return redirect("map")
-                
+                        img = models.BeachImage.objects.create(
+                            beach=beach,
+                            user=user,
+                            image=image_file
+                        )
+                        print(f"[DEBUG] Created BeachImage for beach {beach.id}: {img}")
+
+                        messages.success(request, "Плажът е добавен успешно!", extra_tags="bg-success")
+                        return redirect("map")
+
+                    else:
+                        messages.error(request, "Моля добавете снимка на плажа!")
+                        if beach:
+                            beach.delete()
+                        return redirect("map")
+
                 except Exception as e:
                     print(f"[ERROR] Adding beach failed: {e}")
+                    if beach:
+                        beach.delete()
                     messages.error(request, "Неуспешно добавяне на плаж!", extra_tags="bg-danger")
+                    return redirect("map")
         
         elif form_type == "log_beach":
             beach_log_form = forms.LogBeachForm(request.POST, request.FILES)
+
             if beach_log_form.is_valid():
-                beach_id = request.POST.get("beach_id")
+                beach_id_raw = request.POST.get("beach") 
+                
+                if not beach_id_raw:
+                    print("[ERROR] No beach ID in POST")
+                    messages.error(request, "Не е избран плаж!")
+                    return redirect("map")
+
+                beach_id = None
                 try:
-                    beach = models.Beach.objects.get(id=beach_id)
+                    if len(beach_id_raw) == 36 and '-' in beach_id_raw:
+                        beach_id = uuid.UUID(beach_id_raw)
+                    else:
+                        beach_id = int(beach_id_raw)
+                except (ValueError, TypeError):
+                    print(f"[ERROR] Invalid Beach ID format: {beach_id_raw}")
+                    messages.error(request, "Невалиден плаж!")
+                    return redirect("map")
+
+                try:
+                    beach = models.Beach.objects.get(id=beach_id) 
+                    
+                    image_file = beach_log_form.cleaned_data.get("image")
+                    if not image_file:
+                        messages.error(request, "Нужна е снимка за доклада!")
+                        return redirect("map")
+
+                    image_pil = Image.open(image_file).convert("RGB")
+                    prompts = ["a photo of a beach", "a photo of the sea", "a photo of a coastline", "a picture of sand and water"]
+                    
+                    best_prompt, confidence, scores = get_clip_match(image_pil, prompts)
+                    print(f"[DEBUG] Log CLIP match confidence: {confidence}")
+
+                    VERIFICATION_THRESHOLD = 0.5
+                    
+                    if confidence < VERIFICATION_THRESHOLD:
+                        messages.error(request, "Снимката за доклада не беше разпозната като плаж!")
+                        return redirect("map")
                     log_image = models.BeachImage.objects.create(
                         beach=beach,
                         user=user,
-                        image=beach_log_form.cleaned_data["image"]
+                        image=image_file
                     )
                     print(f"[DEBUG] Created BeachImage for log: {log_image}")
 
@@ -491,16 +602,23 @@ def map_view(request):
                         note=beach_log_form.cleaned_data["note"],
                     )
                     print(f"[DEBUG] Created BeachLog: {log}")
+
                     messages.success(request, "Докладът е добавен успешно!")
                     return redirect("map")
-                
+
                 except models.Beach.DoesNotExist:
                     print(f"[ERROR] Beach with id {beach_id} does not exist.")
                     messages.error(request, "Невалиден плаж!")
-                
+
                 except Exception as e:
+                    import traceback
                     print(f"[ERROR] Logging beach failed: {e}")
+                    traceback.print_exc()
                     messages.error(request, "Неуспешно добавяне на доклад!")
+
+            else:
+                print("[DEBUG] LogBeachForm errors:", beach_log_form.errors)
+                messages.error(request, "Формата съдържа грешки! Моля, проверете полетата.")
         
         elif form_type == "report_beach":
             beach_report_form = forms.ReportBeachForm(request.POST)
@@ -540,17 +658,32 @@ def map_view(request):
     return render(request, "app/map.html", context)
 
 def beach_data(request, beach_id):
+    try:
+        beach = models.Beach.objects.get(pk=beach_id)
+    except models.Beach.DoesNotExist:
+        return JsonResponse({"error": "Плажът не е намерен."}, status=404)
+    except Exception as e:
+        print(f"[ERROR] Beach lookup failed for ID {beach_id}: {e}")
+        return JsonResponse({"error": "Грешка при зареждане на плажа."}, status=500)
+        
     today_dt = date.today()
-    beach = models.Beach.objects.get(id=beach_id)
-    
     today_logs = models.BeachLog.objects.filter(beach=beach, date__date=today_dt)
     logs_count = today_logs.count()
     
     lat = beach.latitude
     lng = beach.longitude
     
-    beach_img = models.BeachImage.objects.get(beach=beach).image.url
-    
+    beach_img = None
+    try:
+        image_obj = models.BeachImage.objects.filter(beach=beach).first()
+        if image_obj:
+            beach_img = image_obj.image.url
+        else:
+            beach_img = "/static/images/default_beach_placeholder.jpg"
+    except Exception as e:
+        print(f"[WARNING] Could not retrieve beach image for {beach.name}: {e}")
+        beach_img = "/static/images/default_beach_placeholder.jpg" # Safe default
+
     degrees = None
     weather_desc = None
     weather_icon = None
@@ -560,7 +693,7 @@ def beach_data(request, beach_id):
     
     if lat and lng:
         session = requests.Session()
-        retries = Retry(total=5, backoff_factor=0.2)
+        retries = Retry(total=5, backoff_factor=0.2, status_forcelist=[500, 502, 503, 504])
         session.mount("https://", HTTPAdapter(max_retries=retries))
 
         url = "https://api.open-meteo.com/v1/forecast"
@@ -582,15 +715,17 @@ def beach_data(request, beach_id):
             wind_speed = cw.get("windspeed")
             wind_deg = cw.get("winddirection")
 
-            weather_desc, weather_icon = assign_weather(weather_code)
+            weather_desc, weather_icon = assign_weather(weather_code) 
+            
             if wind_deg is not None:
                 wind_dir_text, wind_dir_icon = assign_wind(wind_deg)
             else:
                 wind_dir_text, wind_dir_icon = "Няма информация", "bi-question-circle"
 
+        except requests.exceptions.RequestException as e:
+            print(f"[ERROR] Open-Meteo API error: {e}")
         except Exception as e:
-            print("Open-Meteo API error:", e)
-            messages.error(request, "Не успяхме да вземем информация за времето!")
+            print(f"[ERROR] Unexpected error in weather fetch: {e}")
 
     response = {
         "pk": str(beach.pk),
@@ -623,7 +758,7 @@ def beach_data(request, beach_id):
             "water_temp": "water_temp_avr",
             "weather": "weather_avr",
             "algae": "algae_avr",
-            "kids": "kids_avr",
+            "kids": "kids_avr", 
             "waves": "waves",
             "parking_space": "parking_space"
         }
@@ -636,7 +771,7 @@ def beach_data(request, beach_id):
                 .order_by('-count')
                 .first()
             )
-            response[key] = most_common[field] if most_common else "Няма информация"
+            response[key] = most_common.get(field) if most_common else "Няма информация"
 
     return JsonResponse(response)
 
@@ -829,13 +964,18 @@ def handle_task_completion(sender, instance, created, **kwargs):
 
 @login_required
 def complete_task(request, task_id):
+    print(f"[DEBUG] Start complete_task for task_id={task_id}")
+
     if request.method != 'POST':
+        print("[DEBUG] Method not POST")
         messages.error(request, "Възникна грешка! Очаква се POST заявка.")
         return redirect('tasks')
 
     try:
         profile = models.UserProfile.objects.get(user=request.user)
+        print(f"[DEBUG] Found user profile: {profile}")
     except models.UserProfile.DoesNotExist:
+        print("[DEBUG] UserProfile does not exist")
         messages.error(request, "Не успяхме да открием профил! Моля, опитайте отново!")
         return redirect('tasks')
 
@@ -845,49 +985,80 @@ def complete_task(request, task_id):
         task_id=task_id,
         status='accepted'
     )
+    print(f"[DEBUG] Accepted task found: {accepted_task}")
 
     image = request.FILES.get('proof_image')
     if not image:
+        print("[DEBUG] No image uploaded")
         messages.error(request, "Нужна е снимка за потвърждение!")
         return redirect('tasks')
 
     filename = f"{accepted_task.id}_proof_image_{image.name}"
     saved_path = default_storage.save(os.path.join('proof_images', filename), image)
     file_path = default_storage.path(saved_path)
+    print(f"[DEBUG] Image saved to: {file_path}")
 
     if not os.path.exists(file_path):
+        print("[DEBUG] File does not exist on disk!")
         return HttpResponse(f"Грешка: Файлът не съществува на {file_path}", status=500)
 
     task_description = accepted_task.task.description or ""
-    best_match, confidence, scores = get_clip_match(file_path, task_description)
+    print(f"[DEBUG] Task description: {task_description}")
 
-    verified = (best_match.lower() == task_description.lower()) and confidence > 0.25
+    try:
+        best_match, confidence, scores = get_clip_match(file_path, [task_description])
+        print(f"[DEBUG] CLIP results -> best_match: {best_match}, confidence: {confidence}, scores: {scores}")
+    except Exception as e:
+        print(f"[DEBUG] Error in get_clip_match: {e}")
+        best_match = ""
+        confidence = 0.0
+        scores = []
+
+    try:
+        confidence_float = float(confidence)
+    except (ValueError, TypeError):
+        print(f"[DEBUG] Invalid confidence value: {confidence}")
+        confidence_float = 0.0
+    
+    VERIFICATION_THRESHOLD = 0.5 
+
+    verified = confidence_float > VERIFICATION_THRESHOLD
+    print(f"[DEBUG] Verified: {verified} (Confidence: {confidence_float} vs Threshold: {VERIFICATION_THRESHOLD})")
     
     accepted_task.proof_image = saved_path
     accepted_task.verified = verified
-    accepted_task.verification_confidence = confidence
-    accepted_task.completed_at = timezone.now()
+    accepted_task.verification_confidence = confidence_float
 
     if verified:
         accepted_task.status = 'completed'
+        accepted_task.completed_at = timezone.now()
         accepted_task.save()
+        print("[DEBUG] Task marked as completed")
+
         difficulty_xp = {'easy': 20, 'medium': 50, 'hard': 100}
         reward_xp = difficulty_xp.get(accepted_task.task.difficulty, 10)
+        profile.xp += reward_xp
+        profile.save()
+
         try:
             check_badges(profile)
         except Exception as e:
-            print(f"[WARNING] Badge check failed: {e}")
+            print(f"[DEBUG] Badge check failed: {e}")
 
         messages.success(request, f"Ура! Успешно изпълнена задача! Спечелихте {reward_xp} XP.")
         return redirect('tasks')
-
+    
     else:
         accepted_task.status = 'accepted'
         accepted_task.save()
-        
-        messages.error(request, "Снимката не съвпада с описанието на задачата! Уверете се, че снимката е ясна и опитайте отново.")
-        return redirect('tasks')
+        print("[DEBUG] Task verification FAILED")
+        messages.error(
+            request,
+            "Снимката не съвпада с описанието на задачата! Уверете се, че снимката е ясна и опитайте отново."
+        )
 
+    print("[DEBUG] complete_task finished")
+    return redirect('tasks')
 
 @login_required
 def accept_task(request, task_id):
@@ -902,7 +1073,7 @@ def accept_task(request, task_id):
     ).exists()
 
     if already_taken:
-        return HttpResponse("❗ You’ve already accepted this task.", status=400)
+        return messages.error(request, "Вече сте приели тази задача!")
 
     models.AcceptedTask.objects.create(
         user_profile=profile,
@@ -926,10 +1097,16 @@ def tasks_view(request):
         user_profile=profile, status='completed'
     )
 
+    xp_to_next_level = profile.xp_for_next_level - profile.xp
+
     context = {
         "tasks": all_tasks,
         "accepted_ids": list(accepted_tasks.values_list("task_id", flat=True)),
         "completed_ids": list(completed_tasks.values_list("task_id", flat=True)),
+        "xp_to_next_level": xp_to_next_level,
+        "current_xp": profile.xp,
+        "current_level": profile.level,
+        "xp_next": profile.xp_for_next_level,
     }
 
     return render(request, "app/gamification/tasks.html", context)

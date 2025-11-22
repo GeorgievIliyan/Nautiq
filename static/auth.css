@@ -14,6 +14,7 @@ body {
     font-family: "Onest", sans-serif;
     color: #222222;
     min-height: 100vh;
+    height: fit-content;
 }
 
 /* Root Variables */
@@ -144,6 +145,7 @@ body {
     display: flex;
     flex-direction: column;
     width: 100%;
+    height: fit-content;
 }
 
 .form-section-top {

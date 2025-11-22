@@ -1,3 +1,206 @@
-.text-green{
-    color: #2ECC71;
+@import url('https://fonts.googleapis.com/css?family=Onest:100,200,300,regular,500,600,700,800,900');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Onest", sans-serif;
+}
+
+body {
+    background-color: #fbfbfb;
+    color: #222222;
+    padding-right: 64px;
+    padding-left: 64px;
+}
+
+.text-green {
+    color: #2ECC71 !important;
+}
+
+.xp-next {
+    color: #048FE6;
+    margin-bottom: 32px;
+}
+
+.task-wrapper {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    align-items: stretch;
+}
+.task {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    border-radius: 10px;
+    box-shadow: 0 0 0 10px -2px rgba(43, 43, 43, 0.25);
+    padding: 32px;
+    background-color: #ffffff;
+}
+.task form,
+.task > p:last-child {
+    margin-top: auto;
+}
+.btn-primary {
+    background-color: #048FE6;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    font-family: "Onest", sans-serif;
+    color: #ffffff;
+    font-size: 14px;
+    line-height: normal;
+    width: fit-content;
+    font-weight: 300;
+}
+
+.btn-primary svg {
+    width: 27px;
+    height: 20px;
+}
+
+.btn-primary:hover {
+    background-color: rgba(4, 143, 230, 0.9);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+.bi-star-fill{
+    color: #F5B700;
+}
+.completed {
+    position: relative;
+    overflow: hidden;
+    background-color: #ffffff;
+    border-radius: 10px;
+    color: #222222;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 1) 0%, 
+        rgba(46, 204, 113, 0.05) 100%
+    );
+}
+
+.completed::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    pointer-events: none;
+    background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2NgYGD4DwABAwEAf2nHWAAAAABJRU5ErkJggg=='); /* tiny noise */
+    opacity: 0.02;
+}
+input::-webkit-file-upload-button{
+    color: #222222;
+    border: none;
+    border-radius: 5px;
+    background-color: #FAFAFA;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.btn-red {
+    background: #e63946; 
+    color: #fff; 
+    border: none;
+    padding: 8px 16px; 
+    border-radius: 8px;
+    cursor: pointer; 
+    margin-top: 16px;
+    transition: 0.25s ease-in-out all;
+    font-size: 16px;
+    display: flex;
+    gap: 6px;
+}
+.btn-red:hover{ 
+    background: #d62839; 
+}
+
+@media (max-width: 1200px) {
+    .task-wrapper {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    body {
+        padding: 32px;
+    }
+    .task-wrapper {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    .task {
+        padding: 24px;
+    }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    .task-wrapper {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .task {
+        padding: 16px;
+    }
+    .btn-primary, .btn-red {
+        width: 100%;
+        justify-content: center;
+    }
+    h1 {
+        font-size: 1.5rem;
+    }
+    .xp-next {
+        font-size: 0.9rem;
+        margin-bottom: 24px;
+    }
+}
+
+@media (prefers-color-scheme: dark){
+    body{
+        background-color: #1C1C1C;
+        color: white;
+    }
+    .task{
+        color: white;
+        background-color: #222222;
+    }
+    .completed {
+        background-color: #222222;
+        color: white;
+        background: linear-gradient(
+            135deg,
+            rgba(34, 34, 34, 1) 0%,
+            rgba(34, 34, 34, 0.4) 50%,
+            rgba(46, 204, 113, 0.05) 100%
+        );
+        input::-webkit-file-upload-button{
+            color: white;
+            background-color: #222222;
+        }
+        filter: blur(0.5px);
+        transform: translateZ(0);
+    }
 }

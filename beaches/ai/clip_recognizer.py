@@ -13,7 +13,6 @@ def get_clip_model():
     return _model, _processor
 
 def get_clip_match(image_path, text_prompts):
-    
     model, processor = get_clip_model()
 
     if isinstance(image_path, str):
@@ -21,28 +20,29 @@ def get_clip_match(image_path, text_prompts):
     elif isinstance(image_path, Image.Image):
         image = image_path
     else:
-        raise ValueError("image_path must be a string path or PIL.Image object")
+        try:
+            image_path.seek(0)
+        except AttributeError:
+            pass
+        try:
+            image = Image.open(image_path).convert("RGB")
+        except Exception as e:
+            raise ValueError(f"Could not open image file-like object: {e}")
 
     inputs = processor(text=text_prompts, images=image, return_tensors="pt", padding=True)
 
     with torch.no_grad():
         outputs = model(**inputs)
-        image_embeds = outputs.image_embeds
-        text_embeds = outputs.text_embeds
-
-        image_embeds = image_embeds / image_embeds.norm(p=2, dim=-1, keepdim=True)
-        text_embeds = text_embeds / text_embeds.norm(p=2, dim=-1, keepdim=True)
-
+        image_embeds = outputs.image_embeds / outputs.image_embeds.norm(p=2, dim=-1, keepdim=True)
+        text_embeds = outputs.text_embeds / outputs.text_embeds.norm(p=2, dim=-1, keepdim=True)
         scores = (image_embeds @ text_embeds.T).squeeze(0)
 
-    best_idx = scores.argmax().item()
-    best_score = scores[best_idx].item()
+    scores_conf = ((scores + 1) / 2).tolist()
+
+    best_idx = scores_conf.index(max(scores_conf))
     best_match = text_prompts[best_idx]
+    best_score = scores_conf[best_idx]
 
-    all_scores = [(text_prompts[i], scores[i].item()) for i in range(len(text_prompts))]
+    all_scores = [(text_prompts[i], scores_conf[i]) for i in range(len(text_prompts))]
 
-    return {
-        "best_match": best_match,
-        "score": best_score,
-        "all_scores": all_scores
-    }
+    return best_match, best_score, all_scores

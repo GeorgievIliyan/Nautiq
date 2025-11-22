@@ -112,8 +112,8 @@ def generate_daily_tasks():
             difficulty=difficulty,
             date_assigned=date.today(),
             is_daily=True,
+            icon = icon
         )
-        task.icon = icon
         daily_tasks.append(task)
 
     users = models.UserProfile.objects.all()
