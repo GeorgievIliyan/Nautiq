@@ -66,9 +66,6 @@ def is_moderator(user):
 def is_first_login(user):
     return user.is_first_login is True  # Check first login flag | Проверка за първо влизане
 
-def redirect_view(request):
-    return redirect('dashboard')  # Redirect to dashboard | Пренасочване към таблото
-
 def format_k(value):
     """
     Format number to short form: 1000 -> 1k, 1500 -> 1.5k | Форматира число в кратък вид
@@ -89,8 +86,9 @@ def format_k(value):
 
 User = get_user_model()
 
-#* ===== MAILS ===== *#
-
+#* ===== MISC ===== *#
+def homepage(request):
+    return render(request, 'index.html')
 #* ===== USER AUTHENTICATION ===== *#
 
 def register_view(request):

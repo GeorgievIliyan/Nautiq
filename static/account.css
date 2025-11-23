@@ -1,49 +1,49 @@
-@import url(https://fonts.googleapis.com/css?family=Onest:100,200,300,regular,500,600,700,800,900);
-*{
+@import url('https://fonts.googleapis.com/css2?family=Onest:wght@100..900&display=swap');
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-body{
+body {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 0px 64px;
+    padding: 0px 200px;
     font-family: "Onest", sans-serif;
     margin: 0;
     background-color: #FBFBFB;
 }
-.account-wrapper{
+.account-wrapper {
     display: flex;
     flex-direction: column;
     gap: 16px;
     color: #222222;
 }
-.account-quick-info{
+.account-quick-info {
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
-.avatar-wrapper{
+.avatar-wrapper {
     display: flex;
     flex-direction: row;
     gap: 16px;
     align-items: center;
 }
-.username-main{
+.username-main {
     font-weight: 600;
     font-size: 36px;
 }
-.avatar-wrapper div{
+.avatar-wrapper div {
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
-.username-email{
+.username-email {
     font-size: 20px;
     font-weight: 300;
 }
-.logout-btn{
+.logout-btn {
     font-weight: 600;
     color: #222222;
     display: flex;
@@ -54,10 +54,10 @@ body{
     transition: 0.25s ease-in-out all;
     margin-left: 8px;
 }
-.logout-btn i{
+.logout-btn i {
     font-size: 18px;
 }
-.logout-btn:hover{
+.logout-btn:hover {
     color: #E63946;
 }
 .pfp {
@@ -66,7 +66,7 @@ body{
     border-radius: 50%;
     object-fit: cover;
 }
-.account-box{
+.account-box {
     width: 100%;
     border: 1px solid #EEEEEE;
     padding: 16px;
@@ -75,50 +75,118 @@ body{
     gap: 16px;
     border-radius: 10px;
 }
-.box-wrapper{
+.box-wrapper {
     display: flex;
     flex-direction: row;
     gap: 96px;
 }
-.box-wrapper div{
+.box-wrapper div {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
-.key{
+.key {
     color: #939393;
     font-size: 14px;
     font-weight: 300;
     user-select: none;
 }
-.value{
+.value {
     color: #222222;
     font-size: 16px;
 }
-.text-green{
+.text-green {
     color: #2ECC71 !important;
 }
-.text-red{
+.text-red {
     color: #E63946 !important;
 }
-@media(prefers-color-scheme: dark){
-    body{
+
+.btn-red {
+    background: #e63946; 
+    color: #fff; 
+    border: none;
+    padding: 8px 16px; 
+    border-radius: 8px;
+    cursor: pointer; 
+    margin-top: 16px;
+    transition: 0.25s ease-in-out all;
+    font-size: 16px;
+    display: flex;
+    gap: 6px;
+    text-decoration: none;
+    width: fit-content;
+    margin-top: -8px;
+}
+.btn-red:hover{ 
+    background: #d62839; 
+}
+
+
+@media (max-width: 992px) {
+    body {
+        padding: 0px 32px;
+    }
+    .box-wrapper {
+        gap: 64px;
+        flex-wrap: wrap;
+    }
+    .account-box:not(.account-quick-info) .box-wrapper {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+    .box-wrapper div {
+        width: auto;
+    }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 0px 16px;
+    }
+    .account-quick-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    .username-main {
+        font-size: 28px;
+    }
+    .username-email {
+        font-size: 16px;
+    }
+    .pfp {
+        width: 96px;
+        height: 96px;
+    }
+    .logout-btn {
+        margin-left: 0;
+        font-size: 18px;
+    }
+    .account-box:not(.account-quick-info) .box-wrapper {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media(prefers-color-scheme: dark) {
+    body {
         background-color: #1C1C1C;
         color: white;
     }
-    .account-wrapper{
+    .account-wrapper {
         color: white;
     }
-    .logout-btn{
+    .logout-btn {
         color: white;
     }
-    .account-box{
+    .account-box {
         border: 1px solid #383838;
     }
-    .key{
+    .key {
         color: #989898;
     }
-    .value{
+    .value {
         color: white;
     }
 }
