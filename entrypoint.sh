@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+echo "Python executable: $(which python)"
+python -m pip list
+
 python manage.py migrate --noinput
 
 python manage.py collectstatic --noinput --clear
