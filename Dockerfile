@@ -7,11 +7,11 @@ RUN python -m pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p /app/staticfiles
-
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
+RUN mkdir -p /app/staticfiles
+
 EXPOSE 8000
 
-CMD ["./entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
