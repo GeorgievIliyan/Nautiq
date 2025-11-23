@@ -103,7 +103,6 @@ def register_view(request):
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
 
-            # Validation checks
             if not has_uppercase(password):
                 messages.error(request, "Паролата трябва да съдържа поне 1 главна буква.")
                 return render(request, 'auth/register.html', {'form': form})
@@ -124,7 +123,7 @@ def register_view(request):
                         password=password,
                         email=email
                     )
-                    user.is_active = False
+                    user.is_active = True
                     user.save()
 
                     profile = models.UserProfile.objects.create(
@@ -133,32 +132,13 @@ def register_view(request):
                         lat=None,
                         lng=None
                     )
-
-                    uid = urlsafe_base64_encode(force_bytes(user.pk))
-                    token = default_token_generator.make_token(user)
-                    confirmation_link = request.build_absolute_uri(
-                        reverse('activate', kwargs={'uidb64': uid, 'token': token})
-                    )
-                    html_content = render_to_string('emails/confirm_account.html', {
-                        'username': username,
-                        'confirmation_link': confirmation_link
-                    })
-
-                    send_mail(
-                        subject='Потвърдете вашия акаунт в SeaSight',
-                        html_message=html_content,
-                        message=f'Здравей {username},\n\nМоля, потвърдете акаунта си като натиснете линка:\n{confirmation_link}\n\nБлагодарим! \nПоздрави: Екипа на SeaSight',
-                        recipient_list=[email],
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        fail_silently=False,
-                    )
-
-                messages.success(request, "Регистрацията беше успешна! Моля, проверете имейла си, за да потвърдите акаунта.")
+                
+                messages.success(request, "Регистрацията беше успешна! Вече можете да влезете с вашия акаунт.")
                 return redirect('login')
 
             except Exception as e:
                 messages.error(request, "Не успяхме да създадем акаунт! Моля, опитайте отново.")
-                print(f"Error while registering user account: {e}")
+                print(f"Error while registering user account: {e}") 
                 return render(request, 'auth/register.html', {'form': form})
     else:
         form = forms.RegisterForm()  
@@ -268,129 +248,6 @@ def account_delete(request):
         user_model_reference.delete()
         return redirect('register')
     return render(request, 'auth/account_delete.html')
-
-def enter_mail(request):
-    if request.method == "POST":
-        email = request.POST.get("email")
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            user = None
-
-        if user:
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            token = default_token_generator.make_token(user)
-
-            reset_link = request.build_absolute_uri(
-                reverse("set_new_password_from_mail", kwargs={"uidb64": uid, "token": token})
-            )
-            
-            html_content = render_to_string('emails/reset_password_mail.html', {'user_name': 'Alex'})
-
-            try:
-                send_mail(
-                    subject = "Възстановяване на парола - SeaSight",
-                    message = f"Здравей {user.username},\n\nМожете да промените паролата си през този линк:\n{reset_link}\n\nПоздрави,\nЕкипа на SeaSight",
-                    from_email= settings.DEFAULT_FROM_EMAIL,
-                    recipient_list= [user.email],
-                    html_message=html_content, 
-                    fail_silently=False,
-                )
-                messages.success(request, "Изпратихме ви имейл с линк за смяна на парола.")
-                return redirect("login")
-            except Exception as ResetPasswordMailError:
-                print(f"An error occured while trying to send a reset password mail: {ResetPasswordMailError}")
-                messages.error(request, "Възникна грешка! Моля, опитайте отново!")
-                
-        else:
-            messages.error(request, "Няма потребител с този имейл.")
-
-    return render(request, "auth/enter_mail.html")
-
-
-def set_new_password_from_mail(request, uidb64, token):
-    try:
-        uid = urlsafe_base64_decode(uidb64).decode()
-        user = User.objects.get(pk=uid)
-    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-        user = None
-
-    if user and default_token_generator.check_token(user, token):
-        if request.method == "POST":
-            form = forms.SetPasswordForm(request.POST)
-            if form.is_valid():
-                new_password = form.cleaned_data['new_password']
-                user.set_password(new_password)
-                user.save()
-                messages.success(request, "Вашата парола беше променена успешно!")
-                return redirect("login")
-            else:
-                for field, errors in form.errors.items():
-                    for error in errors:
-                        messages.error(request, error)
-                return render(
-                    request,
-                    "auth/set_new_password.html",
-                    {"form": form, "uidb64": uidb64, "token": token},
-                )
-        else:
-            form = forms.SetPasswordForm()
-
-        return render(
-            request,
-            "auth/set_new_password.html",
-            {"form": form, "uidb64": uidb64, "token": token},
-        )
-    else:
-        messages.error(request, "Невалиден или изтекъл линк!")
-        return redirect("enter_mail")
-
-
-@login_required
-def reset_password(request):
-    user = request.user
-
-    if request.method == "POST":
-        old_password = request.POST.get("old_password")
-        new_password = request.POST.get("new_password")
-
-        if not user.check_password(old_password):
-            messages.error(request, "Невалидна стара парола!")
-        elif old_password == new_password:
-            messages.error(request, "Новата парола не може да съвпада със старата!")
-        else:
-            user.set_password(new_password)
-            user.save()
-            update_session_auth_hash(request, user)
-            messages.success(request, "Паролата Ви беше успешно променена!")
-            return redirect("account")
-
-    return render(request, "auth/reset_password.html")
-
-#* Activation View:
-def activate(request, uidb64, token):
-    try:
-        uid = urlsafe_base64_decode(uidb64).decode()
-        user = User.objects.get(pk=uid)
-    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-        user = None
-
-    if user and default_token_generator.check_token(user, token):
-        user.is_active = True
-        user.save()
-        messages.success(request, "Вашият акаунт беше потвърден! Вече можете да влезете.")
-        return redirect('login')
-    else:
-        messages.error(request, "Невалиден или изтекъл линк за потвърждение.")
-        return redirect('register')
-    
-@login_required
-def delete_account(request):
-    if request.method == "POST":
-        user = request.user
-        models.UserProfile.objects.get(user = user).delete()
-        models.User.objects.get(user = user).delete()
-    return redirect("login")
 
 #* ================= APP ================= *#
 @login_required

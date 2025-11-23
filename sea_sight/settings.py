@@ -105,21 +105,6 @@ LOGIN_URL = 'login'
 REGISTER_URL = 'register'
 AUTH_USER_MODEL = 'beaches.User'
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 465
-EMAIL_USE_TLS = False
-EMAIL_USE_SSL = True
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = f"Nautiq <{EMAIL_HOST_USER}>"
-ACCOUNT_EMAIL_SUBJECT_PREFIX = ""
-
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_USERNAME_BLACKLIST = ['admin', 'accounts', 'profile', 'category', 'post', 'inbox']
-
 JAWG_ACCESS_TOKEN = os.getenv('JAWG_ACCESS_TOKEN')
 
 MEDIA_URL = '/media/'
