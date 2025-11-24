@@ -23,7 +23,6 @@
     margin: 0;
 }
 .modal-overlay {
-    /* CRITICAL FOR HIDING on load, until JS changes it */
     display: none; 
     position: fixed;
     top: 0;
@@ -39,7 +38,6 @@
 }
 
 .modal {
-    /* FIX: The modal content itself should use flex display when its overlay is visible */
     display: flex; 
     position: relative;
     overflow: hidden;
@@ -128,7 +126,12 @@
     height: 2px;
     width: 100%;
 }
-
+.modal-buttons{
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  width: fit-content;
+}
 .btn-primary-sm {
     background-color: #048FE6;
     display: inline-flex;
