@@ -1,6 +1,11 @@
+# beaches/tasks.py
 from celery import shared_task
-from django.core.management import call_command
+from .utils import generate_daily_tasks
 
 @shared_task
-def assign_daily_tasks():
-    call_command("assign_daily_tasks")
+def generate_daily_tasks_task():
+    """
+    Celery task that directly calls generate_daily_tasks()
+    """
+    generate_daily_tasks()
+    return "Daily tasks generated and assigned"

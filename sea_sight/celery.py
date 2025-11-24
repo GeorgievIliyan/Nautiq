@@ -9,8 +9,8 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 
 app.conf.beat_schedule = {
-    "assign-daily-tasks": {
-        "task": "beaches.tasks.assign_daily_tasks",
+    "generate-daily-tasks": {
+        "task": "beaches.tasks.generate_daily_tasks_task",
         "schedule": crontab(hour=0, minute=0),
     },
 }
