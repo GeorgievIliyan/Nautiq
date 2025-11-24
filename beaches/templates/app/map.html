@@ -18,7 +18,7 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="{% static 'modals.css' %}">
-    <link rel="stylesheet" href="{% static 'map.css' %}">
+    <link rel="stylesheet" href="{% static 'map.css' %}?v={{ timestamp }}">
     <link rel="stylesheet" href="{% static 'alert.css' %}">
     <link rel="stylesheet" href="{% static 'nav.css' %}">
 
@@ -86,7 +86,6 @@
     <script src="{% static 'js/mapModals.js' %}"></script>
     <script src="{% static 'js/popupAlert.js' %}"></script>
 
-    <!--MAPLIBRE-->
     <script>
         const infoPanel = document.getElementById("info-panel");
         const infoContent = document.getElementById("info-content");
@@ -97,8 +96,12 @@
         const latInput = document.getElementById("id_latitude");
         const lngInput = document.getElementById("id_longitude");
 
-        const USER_LAT = (document.getElementById('user_lat') && document.getElementById('user_lat').textContent.trim()) ? parseFloat(document.getElementById('user_lat').textContent) : 43.204666;
-        const USER_LNG = (document.getElementById('user_lng') && document.getElementById('user_lng').textContent.trim()) ? parseFloat(document.getElementById('user_lng').textContent) : 27.910543;
+        const USER_LAT = (document.getElementById('user_lat') && document.getElementById('user_lat').textContent.trim()) 
+            ? parseFloat(document.getElementById('user_lat').textContent) 
+            : 43.204666;
+        const USER_LNG = (document.getElementById('user_lng') && document.getElementById('user_lng').textContent.trim()) 
+            ? parseFloat(document.getElementById('user_lng').textContent) 
+            : 27.910543;
 
         let BEACHES_DATA = [];
         const beachesScript = document.getElementById('beaches_json');
@@ -113,7 +116,6 @@
 
         const MIN_DISTANCE_METERS = 250;
         const MIN_MARKER_ZOOM = 10;
-
         const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         let mapTheme = prefersDark ? "jawg-dark" : "jawg-lagoon";
 
@@ -130,14 +132,54 @@
         const existingMarkers = [];
         const beachMarkers = [];
 
+        const keyTranslations = {
+            has_lifeguard: "Спасител",
+            has_parking: "Паркинг",
+            has_paid_parking: "Платен паркинг",
+            has_paid_zone: "Платена зона",
+            has_beach_bar: "Бийч бар",
+            has_toilets: "Тоалетни",
+            has_changing_rooms: "Съблекални",
+            times_logged: "Брой отчети",
+            crowd_avr: "Натовареност",
+            clarity_avr: "Видимост на водата",
+            water_temp_avr: "Температура на водата",
+            weather_avr: "Време",
+            algae_avr: "Водорасли",
+            kids_avr: "Деца",
+            waves: "Вълни",
+            parking_space: "Паркинг място"
+        };
+
+        const valueTranslations = {
+            high: "Големи",
+            medium: "Средни",
+            small: "Малки",
+            none: "Няма",
+            hot: "Гореща",
+            warm: "Топла",
+            normal: "Нормална",
+            cool: "Хладна",
+            cold: "Студена",
+            hot: "Горещо",
+            warm: "Топло",
+            normal: "Нормално",
+            cool: "Хладко",
+            cold: "Студено",
+            high: "Високо",
+            medium: "Средно",
+            low: "Ниско",
+            cloudy: "Облачна",
+            murky: "Мътна",
+            clear: "Ясна"
+        };
+
         function deg2rad(deg) { return deg * (Math.PI / 180); }
         function getDistanceMeters(lat1, lon1, lat2, lon2) {
             const R = 6371;
             const dLat = deg2rad(lat2 - lat1);
             const dLon = deg2rad(lon2 - lon1);
-            const a = Math.sin(dLat/2)*Math.sin(dLat/2) +
-                    Math.cos(deg2rad(lat1))*Math.cos(deg2rad(lat2)) *
-                    Math.sin(dLon/2)*Math.sin(dLon/2);
+            const a = Math.sin(dLat/2)**2 + Math.cos(deg2rad(lat1))*Math.cos(deg2rad(lat2)) * Math.sin(dLon/2)**2;
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             return R * c * 1000;
         }
@@ -154,20 +196,9 @@
             });
         }
 
-        function renderInfo(data) {
+        function renderInfo(data, lat, lng) {
             const target = window.innerWidth >= 768 ? infoContent : bottomContent;
             if (!target) return;
-
-            const keyTranslations = {
-                has_lifeguard: "Спасител",
-                has_parking: "Паркинг",
-                has_paid_parking: "Платен паркинг",
-                has_paid_zone: "Платена зона",
-                has_beach_bar: "Бийч бар",
-                has_toilets: "Тоалетни",
-                has_changing_rooms: "Съблекални",
-                times_logged: "Брой отчети",
-            };
 
             let html = `
                 <img src="${data.beach_image}" class="beach-image">
@@ -182,11 +213,11 @@
             `;
 
             const skipKeys = [
-                "name", "description", "pk", "log_id",
-                "wind", "wind_direction", "wind_direction_icon",
-                "wind_direction_text", "weather", "weather_icon",
-                "weather_desc", "beach_image", "degrees",
-                "lat_lng", "rating"
+                "name","description","pk","log_id","id",
+                "wind","wind_direction","wind_direction_icon",
+                "wind_direction_text","weather","weather_icon",
+                "weather_desc","beach_image","degrees",
+                "lat_lng","rating","latitude","longitude","lat","lng"
             ];
 
             for (const [key, value] of Object.entries(data)) {
@@ -195,14 +226,15 @@
 
                 let displayValue = value;
                 if (typeof value === "boolean") {
-                    displayValue = value
-                        ? '<i class="bi bi-check2 confirmation-icon"></i>'
+                    displayValue = value 
+                        ? '<i class="bi bi-check2 confirmation-icon"></i>' 
                         : '<i class="bi bi-x confirmation-icon"></i>';
+                } else if (valueTranslations[value] !== undefined) {
+                    displayValue = valueTranslations[value];
                 }
 
-                const translatedKey =
-                    keyTranslations[key] ||
-                    key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+                const normalizedKey = key.toLowerCase().replace(/\s+/g, '_');
+                const translatedKey = keyTranslations[normalizedKey] || key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
                 html += `<li><strong>${translatedKey}:</strong> ${displayValue}</li>`;
             }
@@ -216,24 +248,91 @@
 
             html += `<button class="btn-red mt-3" onclick="openReportModal()">Докладвайте проблем <i class="bi bi-exclamation-octagon"></i></button>`;
             html += `<button class="btn-primary" onclick="openLogsModal(${data.id})">Подай отчет</button>`;
+            
+            if (!isNaN(lat) && !isNaN(lng)) {
+                html += `<button class="btn-primary" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${lat},${lng}', '_blank')">
+                    Опътвания <i class="bi bi-compass"></i>
+                </button>`;
+            }
 
             target.innerHTML = html;
         }
 
-        function openInfo(data) {
-            renderInfo(data);
+        function openInfo(data, lat, lng) {
+            renderInfo(data, lat, lng);
             if (window.innerWidth >= 768) safeAddClass(infoPanel, "visible");
-            else safeAddClass(bottomSheet, "visible");
+            else {
+                bottomSheet.style.transform = 'translateY(0)';
+                safeAddClass(bottomSheet, "visible");
+            }
         }
 
         function closeInfo() {
             safeRemoveClass(infoPanel, "visible");
-            safeRemoveClass(bottomSheet, "visible");
+            if (bottomSheet) {
+                bottomSheet.style.transform = 'translateY(100vh)';
+                bottomSheet.style.transition = 'transform 0.3s ease-in';
+                setTimeout(() => {
+                    safeRemoveClass(bottomSheet, "visible");
+                    bottomSheet.style.transition = '';
+                }, 300);
+            }
         }
 
         if (closePanelBtn) closePanelBtn.addEventListener("click", closeInfo);
+        
         const dragHandle = document.getElementById('drag-handle');
-        if (dragHandle) dragHandle.addEventListener("click", closeInfo);
+        
+        if (dragHandle && bottomSheet) {
+            let isDragging = false;
+            let startY = 0;
+            let currentY = 0;
+            let translateY = 0;
+            const THRESHOLD = 100;
+
+            dragHandle.addEventListener("click", (e) => {
+                e.preventDefault();
+                closeInfo();
+            });
+
+            const startDrag = (e) => {
+                if (window.innerWidth >= 768) return; 
+                
+                isDragging = true;
+                startY = e.touches[0].clientY; 
+                bottomSheet.style.transition = 'none'; 
+            };
+
+            const onDrag = (e) => {
+                if (!isDragging) return;
+
+                currentY = e.touches[0].clientY;
+                
+                if (currentY > startY) {
+                    translateY = currentY - startY;
+                    bottomSheet.style.transform = `translateY(${translateY}px)`;
+                }
+            };
+
+            const endDrag = () => {
+                if (!isDragging) return;
+                isDragging = false;
+
+                bottomSheet.style.transition = 'transform 0.3s ease-out'; 
+
+                if (translateY > THRESHOLD) {
+                    closeInfo();
+                } else {
+                    bottomSheet.style.transform = 'translateY(0)';
+                }
+                
+                translateY = 0;
+            };
+
+            dragHandle.addEventListener('touchstart', startDrag);
+            document.addEventListener('touchmove', onDrag);
+            document.addEventListener('touchend', endDrag);
+        }
 
         function isOutsideBulgaria(lat, lng) {
             return lat < 41.2 || lat > 44.2 || lng < 22.4 || lng > 28.6;
@@ -243,8 +342,8 @@
             if (!Array.isArray(BEACHES_DATA)) BEACHES_DATA = [];
 
             BEACHES_DATA.forEach(beach => {
-                const lat = parseFloat(beach.latitude ?? beach.lat ?? beach.latitude);
-                const lng = parseFloat(beach.longitude ?? beach.lng ?? beach.longitude);
+                const lat = parseFloat(beach.latitude ?? beach.lat);
+                const lng = parseFloat(beach.longitude ?? beach.lng);
                 if (Number.isNaN(lat) || Number.isNaN(lng)) return;
 
                 const coords = [lng, lat];
@@ -261,31 +360,31 @@
                         const resp = await fetch(`/beach/${beach.id}/`);
                         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                         const data = await resp.json();
+                        
+                        const beachLat = parseFloat(beach.latitude ?? beach.lat);
+                        const beachLng = parseFloat(beach.longitude ?? beach.lng);
 
-                        if (latInput) latInput.value = data.latitude ?? beach.latitude ?? lat;
-                        if (lngInput) lngInput.value = data.longitude ?? beach.longitude ?? lng;
+                        if (latInput) latInput.value = data.latitude ?? beachLat;
+                        if (lngInput) lngInput.value = data.longitude ?? beachLng;
 
                         const beachInput = document.getElementById("id_beach");
                         if (beachInput) beachInput.value = beach.id;
 
-                        openInfo(data);
+                        openInfo(data, beachLat, beachLng); 
                     } catch (err) {
                         console.error("Error fetching beach data:", err);
                         if (infoContent) infoContent.innerHTML = `<p class="text-danger">Възникна грешка при зареждането на информацията.</p>`;
                         safeAddClass(infoPanel, "visible");
                     }
                 });
-
             });
 
             updateMarkerVisibility();
             map.on('zoom', updateMarkerVisibility);
         });
 
-        // MARKERS
         map.on('click', (e) => {
             const { lng, lat } = e.lngLat;
-
 
             if (isOutsideBulgaria(lat, lng)) {
                 showPopupAlert(`Вие сте извън границите на България!`);
@@ -319,7 +418,7 @@
             const btn = popupContent.querySelector('button');
             if (btn) btn.addEventListener('click', (evt) => {
                 evt.preventDefault();
-                openAddModal?.();
+                if (typeof openAddModal === "function") openAddModal();
             });
 
             newMarker.setPopup(new maplibregl.Popup().setDOMContent(popupContent)).togglePopup();
@@ -333,7 +432,6 @@
                 map.setStyle(`https://api.jawg.io/styles/${newTheme}.json?access-token={{ jawg_token }}`);
             });
         }
-
     </script>
 
     <script>

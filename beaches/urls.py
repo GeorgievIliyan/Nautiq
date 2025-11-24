@@ -8,6 +8,7 @@ urlpatterns = [
     path('auth/login/', views.login_view, name='login'),
     path('auth/logout/confirm', views.logout_view, name='logout'),
     path('account/', views.account_view, name='account'),
+    path('account/delete/', views.account_delete, name='delete_account'),
     #* APP URLS:
     path('dashboard/', views.dashboard, name='dashboard'),
     path('map/', views.map_view, name='map'),

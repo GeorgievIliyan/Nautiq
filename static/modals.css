@@ -5,16 +5,14 @@
     padding: 0;
     margin: 0;
 }
-
 .modal-overlay {
-    display: none;
+    display: none; 
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
     background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
     justify-content: center;
     align-items: flex-start;
     overflow-y: auto;
@@ -23,12 +21,12 @@
 }
 
 .modal {
+    display: flex; 
     position: relative;
     overflow: hidden;
     background-color: #FBFBFB;
     color: #222222;
     z-index: 10000;
-    display: none;
     flex-direction: column;
     gap: 32px;
     width: fit-content;
@@ -43,9 +41,6 @@
     box-shadow: rgba(149, 157, 165, 0.2) 0px 0px 20px;
 
     overflow-y: scroll;
-    scrollbar-width: none;
-
-    overflow-y: auto;
     scrollbar-width: none;
 }
 .modal::-webkit-scrollbar {

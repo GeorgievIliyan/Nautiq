@@ -1,0 +1,23 @@
+<div class="modal-overlay" id="confirm-delete-modal" style="display: none;">
+    <div class="modal">
+        <div class="rectangle"></div>
+        <div class="modal-top">
+        <div class="modal-top-wrapper">
+            <div class="modal-top-content">
+            <h3>Потвърждение</h3>
+            <p>Искате ли да изтриете вашия акаунт?</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" onclick="closeConfirmDeleteModal()" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+            </svg>
+        </div>
+        <div class="modal-seperator"></div>
+        </div>
+        <div class="modal-content">
+        <div class="modal-buttons">
+            <button type="button" class="btn-red" onclick="confirmDelete()">Да, изтрий</button>
+            <button type="button" class="btn-primary-sm" onclick="closeConfirmDeleteModal()">Отказ</button>
+        </div>
+        </div>
+    </div>
+</div>
