@@ -29,20 +29,24 @@ def get_clip_match(image_path, text_prompts):
         except Exception as e:
             raise ValueError(f"Could not open image file-like object: {e}")
 
-    inputs = processor(text=text_prompts, images=image, return_tensors="pt", padding=True)
+    descriptive_prompts = [f"a photo of {t}" for t in text_prompts]
+
+    inputs = processor(text=descriptive_prompts, images=image, return_tensors="pt", padding=True)
 
     with torch.no_grad():
         outputs = model(**inputs)
+
         image_embeds = outputs.image_embeds / outputs.image_embeds.norm(p=2, dim=-1, keepdim=True)
         text_embeds = outputs.text_embeds / outputs.text_embeds.norm(p=2, dim=-1, keepdim=True)
-        scores = (image_embeds @ text_embeds.T).squeeze(0)
 
-    scores_conf = ((scores + 1) / 2).tolist()
+        scores = image_embeds @ text_embeds.T
+        scores = scores.squeeze(0)
+        scores = scores.tolist()
 
-    best_idx = scores_conf.index(max(scores_conf))
+    best_idx = scores.index(max(scores))
     best_match = text_prompts[best_idx]
-    best_score = scores_conf[best_idx]
+    best_score = scores[best_idx]
 
-    all_scores = [(text_prompts[i], scores_conf[i]) for i in range(len(text_prompts))]
+    all_scores = [(text_prompts[i], scores[i]) for i in range(len(text_prompts))]
 
     return best_match, best_score, all_scores
