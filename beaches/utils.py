@@ -101,7 +101,7 @@ def generate_daily_tasks():
     for user in users:
         user.tasks.add(*daily_tasks)
 
-    print(f"✅ {str(len(daily_tasks)) +  " x " + str(len(users))} new daily tasks created and assigned to {len(users)} users.")
+    print(f"✅ {str(len(daily_tasks)) + ' x ' + str(len(users))} new daily tasks created and assigned to {len(users)} users.")
     return daily_tasks
 
 WEATHER_MAP = {
