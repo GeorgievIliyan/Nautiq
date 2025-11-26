@@ -456,5 +456,22 @@
         });
     </script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const djangoMessages = document.querySelectorAll('#django-messages .django-message');
+            djangoMessages.forEach(msgEl => {
+                const rawTags = msgEl.dataset.level || '';
+                const tags = rawTags.toLowerCase().split(/\s+/);
+                const text = msgEl.textContent.trim();
+                if (!text) return;
+
+                let type = 'success';
+                if (tags.includes('danger')) type = 'danger';
+                else if (tags.includes('success')) type = 'success';
+                else if (tags.includes('info')) type = 'success';
+                showPopupAlert(text, type, 4000);
+            });
+        });
+    </script>
 </body>
 </html>

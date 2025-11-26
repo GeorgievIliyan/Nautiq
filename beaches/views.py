@@ -44,6 +44,9 @@ from validators.uppercase_validator import is_valid_uppercase as has_uppercase
 from difflib import SequenceMatcher
 import uuid
 
+from io import BytesIO
+from PIL import Image
+
 # Local imports | Локални импорти
 from . import forms, models
 from .utils import (
@@ -331,12 +334,24 @@ def map_view(request):
     beach_log_form = forms.LogBeachForm()
     beach_report_form = forms.ReportBeachForm()
 
+    def validate_image_with_clip(uploaded_file, prompts, threshold=0.5):
+        """Converts uploaded file to BytesIO and runs CLIP check"""
+        try:
+            image_pil = Image.open(uploaded_file).convert("RGB")
+            buffer = BytesIO()
+            image_pil.save(buffer, format="JPEG")
+            buffer.seek(0)
+            best_prompt, confidence, scores = get_clip_match(buffer, prompts)
+            return best_prompt, confidence, scores
+        except Exception as e:
+            print(f"[ERROR] CLIP validation failed: {e}")
+            return None, 0.0, None
+
     if request.method == "POST":
         form_type = request.POST.get("form_type")
-        
+
         if form_type == "add_beach":
             beach_add_form = forms.BeachAddForm(request.POST, request.FILES)
-
             if beach_add_form.is_valid():
                 beach = None
                 try:
@@ -356,37 +371,30 @@ def map_view(request):
                     print(f"[DEBUG] Created Beach (pending image validation): {beach}")
 
                     image_file = beach_add_form.cleaned_data.get("image")
-
-                    if image_file:
-                        image_pil = Image.open(image_file).convert("RGB")
-                        
-                        prompts = ["beach or shoreline or coast"]
-                        
-                        best_prompt, confidence, scores = get_clip_match(image_pil, prompts)
-                        print(f"[DEBUG] CLIP match confidence: {confidence}")
-
-                        VERIFICATION_THRESHOLD = 0.5 
-                        
-                        if confidence < VERIFICATION_THRESHOLD:
-                            messages.error(request, "Снимката не беше разпозната като плаж! Моля, качете ясна снимка на плажа.")
-                            if beach:
-                                beach.delete()
-                            return redirect("map")
-                        img = models.BeachImage.objects.create(
-                            beach=beach,
-                            user=user,
-                            image=image_file
-                        )
-                        print(f"[DEBUG] Created BeachImage for beach {beach.id}: {img}")
-
-                        messages.success(request, "Плажът е добавен успешно!", extra_tags="bg-success")
-                        return redirect("map")
-
-                    else:
+                    if not image_file:
                         messages.error(request, "Моля добавете снимка на плажа!")
                         if beach:
                             beach.delete()
                         return redirect("map")
+
+                    prompts = ["beach or shoreline or coast"]
+                    _, confidence, _ = validate_image_with_clip(image_file, prompts)
+                    print(f"[DEBUG] CLIP match confidence: {confidence}")
+
+                    if confidence < 0.25:
+                        messages.error(request, "Снимката не беше разпозната като плаж! Моля, качете ясна снимка на плажа.")
+                        if beach:
+                            beach.delete()
+                        return redirect("map")
+
+                    img = models.BeachImage.objects.create(
+                        beach=beach,
+                        user=user,
+                        image=image_file
+                    )
+                    print(f"[DEBUG] Created BeachImage for beach {beach.id}: {img}")
+                    messages.success(request, "Плажът е добавен успешно!", extra_tags="bg-success")
+                    return redirect("map")
 
                 except Exception as e:
                     print(f"[ERROR] Adding beach failed: {e}")
@@ -394,55 +402,43 @@ def map_view(request):
                         beach.delete()
                     messages.error(request, "Неуспешно добавяне на плаж!", extra_tags="bg-danger")
                     return redirect("map")
-        
+
         elif form_type == "log_beach":
             beach_log_form = forms.LogBeachForm(request.POST, request.FILES)
-
             if beach_log_form.is_valid():
-                beach_id_raw = request.POST.get("beach") 
-                
+                beach_id_raw = request.POST.get("beach")
                 if not beach_id_raw:
                     print("[ERROR] No beach ID in POST")
                     messages.error(request, "Не е избран плаж!")
                     return redirect("map")
 
-                beach_id = None
                 try:
-                    if len(beach_id_raw) == 36 and '-' in beach_id_raw:
-                        beach_id = uuid.UUID(beach_id_raw)
-                    else:
-                        beach_id = int(beach_id_raw)
+                    beach_id = uuid.UUID(beach_id_raw) if '-' in beach_id_raw else int(beach_id_raw)
                 except (ValueError, TypeError):
                     print(f"[ERROR] Invalid Beach ID format: {beach_id_raw}")
                     messages.error(request, "Невалиден плаж!")
                     return redirect("map")
 
                 try:
-                    beach = models.Beach.objects.get(id=beach_id) 
-                    
+                    beach = models.Beach.objects.get(id=beach_id)
                     image_file = beach_log_form.cleaned_data.get("image")
                     if not image_file:
                         messages.error(request, "Нужна е снимка за доклада!")
                         return redirect("map")
 
-                    image_pil = Image.open(image_file).convert("RGB")
                     prompts = ["a photo of a beach", "a photo of the sea", "a photo of a coastline", "a picture of sand and water"]
-                    
-                    best_prompt, confidence, scores = get_clip_match(image_pil, prompts)
+                    _, confidence, _ = validate_image_with_clip(image_file, prompts)
                     print(f"[DEBUG] Log CLIP match confidence: {confidence}")
 
-                    VERIFICATION_THRESHOLD = 0.5
-                    
-                    if confidence < VERIFICATION_THRESHOLD:
+                    if confidence < 0.5:
                         messages.error(request, "Снимката за доклада не беше разпозната като плаж!")
                         return redirect("map")
+
                     log_image = models.BeachImage.objects.create(
                         beach=beach,
                         user=user,
                         image=image_file
                     )
-                    print(f"[DEBUG] Created BeachImage for log: {log_image}")
-
                     log = models.BeachLog.objects.create(
                         beach=beach,
                         user=user,
@@ -457,7 +453,6 @@ def map_view(request):
                         note=beach_log_form.cleaned_data["note"],
                     )
                     print(f"[DEBUG] Created BeachLog: {log}")
-
                     messages.success(request, "Докладът е добавен успешно!")
                     return redirect("map")
 
@@ -474,7 +469,7 @@ def map_view(request):
             else:
                 print("[DEBUG] LogBeachForm errors:", beach_log_form.errors)
                 messages.error(request, "Формата съдържа грешки! Моля, проверете полетата.")
-        
+
         elif form_type == "report_beach":
             beach_report_form = forms.ReportBeachForm(request.POST)
             if beach_report_form.is_valid():
@@ -491,11 +486,11 @@ def map_view(request):
                     print(f"[DEBUG] Created BeachReport: {report}")
                     messages.success(request, "Сигналът е подаден успешно!")
                     return redirect("map")
-                
+
                 except models.Beach.DoesNotExist:
                     print(f"[ERROR] Beach with id {beach_id} does not exist.")
                     messages.error(request, "Невалиден плаж!")
-                
+
                 except Exception as e:
                     print(f"[ERROR] Reporting beach failed: {e}")
                     messages.error(request, "Неуспешно подаване на сигнал!")
@@ -822,15 +817,12 @@ def complete_task(request, task_id):
     print(f"[DEBUG] Start complete_task for task_id={task_id}")
 
     if request.method != 'POST':
-        print("[DEBUG] Method not POST")
         messages.error(request, "Възникна грешка! Очаква се POST заявка.")
         return redirect('tasks')
 
     try:
         profile = models.UserProfile.objects.get(user=request.user)
-        print(f"[DEBUG] Found user profile: {profile}")
     except models.UserProfile.DoesNotExist:
-        print("[DEBUG] UserProfile does not exist")
         messages.error(request, "Не успяхме да открием профил! Моля, опитайте отново!")
         return redirect('tasks')
 
@@ -840,59 +832,40 @@ def complete_task(request, task_id):
         task_id=task_id,
         status='accepted'
     )
-    print(f"[DEBUG] Accepted task found: {accepted_task}")
 
     image = request.FILES.get('proof_image')
     if not image:
-        print("[DEBUG] No image uploaded")
         messages.error(request, "Нужна е снимка за потвърждение!")
         return redirect('tasks')
 
     filename = f"{accepted_task.id}_proof_image_{image.name}"
     saved_path = default_storage.save(os.path.join('proof_images', filename), image)
     file_path = default_storage.path(saved_path)
-    print(f"[DEBUG] Image saved to: {file_path}")
 
-    if not os.path.exists(file_path):
-        print("[DEBUG] File does not exist on disk!")
-        return HttpResponse(f"Грешка: Файлът не съществува на {file_path}", status=500)
-
-    task_description = accepted_task.task.description or ""
-    print(f"[DEBUG] Task description: {task_description}")
+    short_prompt = accepted_task.task.description or ""
+    prompts = [short_prompt, f"{short_prompt} object", f"{short_prompt} photo"]
 
     try:
-        best_match, confidence, scores = get_clip_match(file_path, [task_description])
-        print(f"[DEBUG] CLIP results -> best_match: {best_match}, confidence: {confidence}, scores: {scores}")
+        best_match, confidence, scores = get_clip_match(file_path, prompts)
     except Exception as e:
-        print(f"[DEBUG] Error in get_clip_match: {e}")
+        print(f"[DEBUG] CLIP error: {e}")
         best_match = ""
         confidence = 0.0
         scores = []
 
-    try:
-        confidence_float = float(confidence)
-    except (ValueError, TypeError):
-        print(f"[DEBUG] Invalid confidence value: {confidence}")
-        confidence_float = 0.0
-    
-    VERIFICATION_THRESHOLD = 0.5 
+    VERIFICATION_THRESHOLD = 0.25
+    verified = confidence > VERIFICATION_THRESHOLD
 
-    verified = confidence_float > VERIFICATION_THRESHOLD
-    print(f"[DEBUG] Verified: {verified} (Confidence: {confidence_float} vs Threshold: {VERIFICATION_THRESHOLD})")
-    
     accepted_task.proof_image = saved_path
     accepted_task.verified = verified
-    accepted_task.verification_confidence = confidence_float
+    accepted_task.verification_confidence = float(confidence)
 
     if verified:
         accepted_task.status = 'completed'
         accepted_task.completed_at = timezone.now()
         accepted_task.save()
-        print("[DEBUG] Task marked as completed")
 
-        difficulty_xp = {'easy': 20, 'medium': 50, 'hard': 100}
-        reward_xp = difficulty_xp.get(accepted_task.task.difficulty, 10)
-        profile.xp += reward_xp
+        profile.xp += accepted_task.task.reward
         profile.save()
 
         try:
@@ -900,19 +873,12 @@ def complete_task(request, task_id):
         except Exception as e:
             print(f"[DEBUG] Badge check failed: {e}")
 
-        messages.success(request, f"Ура! Успешно изпълнена задача! Спечелихте {reward_xp} XP.")
-        return redirect('tasks')
-    
+        messages.success(request, f"Ура! Успешно изпълнена задача! Спечелихте {accepted_task.task.reward} XP.")
     else:
         accepted_task.status = 'accepted'
         accepted_task.save()
-        print("[DEBUG] Task verification FAILED")
-        messages.error(
-            request,
-            "Снимката не съвпада с описанието на задачата! Уверете се, че снимката е ясна и опитайте отново."
-        )
+        messages.error(request, "Снимката не съвпада с описанието на задачата! Уверете се, че снимката е ясна и опитайте отново.")
 
-    print("[DEBUG] complete_task finished")
     return redirect('tasks')
 
 @login_required

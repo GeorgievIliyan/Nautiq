@@ -14,6 +14,9 @@ def default_rating():
 class User(AbstractUser):
     is_first_login = models.BooleanField(default=True)
 
+# models.py
+from django.db import models
+
 class Task(models.Model):
     DIFFICULTY_CHOICES = [
         ('easy', 'Easy'),
@@ -36,6 +39,11 @@ class Task(models.Model):
     reward = models.PositiveIntegerField(default=10)
     is_daily = models.BooleanField(default=False)
     icon = models.CharField(null=True, blank=True, default="bi bi-bullseye")
+
+    def save(self, *args, **kwargs):
+        difficulty_xp = {"easy": 20, "medium": 50, "hard": 100}
+        self.reward = difficulty_xp.get(self.difficulty, 10)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.title} ({self.difficulty})"
@@ -313,15 +321,6 @@ class AcceptedTask(models.Model):
     accepted_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     proof_image = models.ImageField(upload_to='task_proofs/', blank=True, null=True)
-    
-    """
-    def analyze_image(self):
-        prompts = ["a beach", "a soda can", "a plastic bottle", "trash", "sand", "sea"]
-        # best, conf, _ = get_clip_match(self.image.path, prompts)
-        # self.label = best
-        # self.confidence = conf
-        # self.save()
-    """
 
     class Meta:
         unique_together = ('user_profile', 'task')

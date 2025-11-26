@@ -1,12 +1,26 @@
 @import url(https://fonts.googleapis.com/css?family=Onest:100,200,300,regular,500,600,700,800,900);
-*{
+
+* {
     box-sizing: border-box;
     font-family: "Onest", sans-serif;
     padding: 0;
     margin: 0;
 }
+
+input[type="file"]::-webkit-file-upload-button {
+    background-color: #FAFAFA;
+    color: #222222;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+input[type="file"]::-webkit-file-upload-button:hover {
+    background-color: #383838;
+}
 .modal-overlay {
-    display: none; 
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
@@ -21,7 +35,7 @@
 }
 
 .modal {
-    display: flex; 
+    display: flex;
     position: relative;
     overflow: hidden;
     background-color: #FBFBFB;
@@ -31,22 +45,21 @@
     gap: 32px;
     width: fit-content;
     height: fit-content;
-    max-height: none;
     max-width: 90%;
     max-height: 90vh;
     margin: auto;
     padding: 48px;
-
     border-radius: 15px;
     box-shadow: rgba(149, 157, 165, 0.2) 0px 0px 20px;
-
     overflow-y: scroll;
     scrollbar-width: none;
 }
+
 .modal::-webkit-scrollbar {
     display: none;
 }
-.rectangle{
+
+.rectangle {
     position: absolute;
     top: -70px;
     filter: blur(40px);
@@ -54,57 +67,69 @@
     opacity: 0.4;
     z-index: 0;
     display: block;
-    width: 100%; 
+    width: 100%;
     left: 0;
     background-color: #048fe6;
 }
-.modal-content{
+
+.modal-content {
     border: none;
     background: none;
 }
-.modal-top, .modal-content {
+
+.modal-top,
+.modal-content {
     position: relative;
-    z-index: 5; 
+    z-index: 5;
 }
-.modal-top{
+
+.modal-top {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 24px;
 }
-.modal-top-wrapper{
+
+.modal-top-wrapper {
     display: flex;
     flex-direction: row;
     align-items: top;
     justify-content: space-between;
     gap: 128px;
 }
-.modal-top-wrapper svg{
+
+.modal-top-wrapper svg {
     transform: translateY(8px);
 }
-.modal-top-content{
+
+.modal-top-content {
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
-.modal-top-content h3{
+
+.modal-top-content h3 {
     font-size: 32px;
     font-weight: 600;
 }
-.modal-top-content p{
+
+.modal-top-content p {
     font-size: 12px;
     color: #989898;
 }
-.modal-top svg{
+
+.modal-top svg {
     width: 20px;
     height: 20px;
     transition: .25s ease-in-out all;
     cursor: pointer;
 }
-.modal-top svg:hover{
+
+.modal-top svg:hover {
     color: #E63946;
 }
-.modal-seperator{
+
+.modal-seperator {
     background-color: #f0f0f0;
     height: 2px;
     width: 100%;
@@ -136,53 +161,61 @@
     height: 20px;
 }
 
-.btn-primary:hover, .btn-primary-sm:hover {
+.btn-primary:hover,
+.btn-primary-sm:hover {
     background-color: rgba(4, 143, 230, 0.9);
 }
 
-.btn-primary:active, .btn-primary-sm:active {
+.btn-primary:active,
+.btn-primary-sm:active {
     transform: scale(0.98);
 }
 
-.btn-primary:disabled, .btn-primary-sm:disabled {
+.btn-primary:disabled,
+.btn-primary-sm:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
-.modal form{
+
+.modal form {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
-.modal form input[type="file"]::-webkit-file-upload-button {
+
+.modal input[type="file"]::-webkit-file-upload-button {
     background-color: #FAFAFA;
-    color: #222222;
-    border: none;
-    padding: 4px 8px;
-    border-radius: 5px;
-    cursor: pointer;
+    color: #222;
 }
-.modal form input[type="file"]::-webkit-file-upload-button:hover {
+
+.modal input[type="file"]::-webkit-file-upload-button:hover {
     background-color: #f1f1f1;
 }
-.modal-input-group{
+
+.modal-input-group {
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
-.modal-input-group input{
+
+.modal-input-group input {
     transition: .15s ease-in-out all;
 }
+
 .modal-input-group input:-webkit-autofill,
 .modal-input-group textarea:-webkit-autofill {
     -webkit-box-shadow: 0 0 0px 1000px rgba(4, 143, 230, 0.05) inset;
     -webkit-text-fill-color: #222222;
     transition: background-color 5000s ease-in-out 0s;
 }
-.modal-inline-input{
+
+.modal-inline-input {
     display: flex;
     gap: 4px;
 }
-.modal-input-group input, .modal-input-group textarea{
+
+.modal-input-group input,
+.modal-input-group textarea {
     border-radius: 7.5px;
     padding: 8px;
     background-color: #FAFAFA;
@@ -191,24 +224,27 @@
     color: #222222;
     font-family: "Onest", sans-serif;
 }
-.modal-input-group label{
+
+.modal-input-group label {
     font-size: 16px;
     font-weight: 300;
 }
-.modal-input-group input::placeholder{
+
+.modal-input-group input::placeholder {
     color: #C8C8C8;
     font-size: 14px;
 }
-.modal-input-group input:focus, .modal-input-group textarea:focus{
+
+.modal-input-group input:focus,
+.modal-input-group textarea:focus {
     border: 1px solid #048FE6;
     outline: none;
 }
+
 input[type="checkbox"] {
     accent-color: #048FE6;
 }
-input[type="file"]::-webkit-file-upload-button:hover{
-    background-color: #383838;
-}
+
 textarea {
     resize: vertical;
     overflow-y: auto;
@@ -216,50 +252,126 @@ textarea {
     max-width: 100%;
     box-sizing: border-box;
 }
+
 textarea::-webkit-scrollbar {
     display: none;
-    width: 0px;
 }
 
-textarea::-webkit-scrollbar-track{
+select {
+    font-family: "Onest", sans-serif;
+    font-size: 16px;
+    color: #222222;
+    background-color: #fcfcfc;
+    border: 1px solid #EEEEEE;
+    border-radius: 10px;
+    padding: 12px 18px 12px 8px;
+    cursor: pointer;
+    outline: none;
+    transition: border 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+select:focus {
+    border-color: #048FE6;
+    box-shadow: 0 0 0 2px rgba(4, 143, 230, 0.2);
+    background-color: #ffffff;
+}
+
+select option[value=""] {
+    color: #C8C8C8;
+}
+select::-webkit-inner-spin-button,
+select::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+select::-webkit-calendar-picker-indicator {
     display: none;
 }
-
-textarea::-webkit-scrollbar-button{
-    display: none;
+select::-webkit-appearance{ display: none;} 
+select::after {
+    content: "▼";
+    font-size: 12px;
+    color: #048FE6;
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
 }
 
-@media(prefers-color-scheme: dark){
-    .modal{
+select::-moz-focus-inner {
+    border: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+    select {
+        background-color: #242424;
+        border: 1px solid #383838;
+        color: #ffffff;
+    }
+    select:focus {
+        border-color: #048FE6;
+        box-shadow: 0 0 0 2px rgba(4, 143, 230, 0.2);
+        background-color: #2C2C2C;
+    }
+
+    select option {
+        background-color: #242424;
+        color: #ffffff;
+    }
+}
+
+@media(prefers-color-scheme: dark) {
+    .modal {
         background-color: #1F1F21;
     }
-    .modal-top h3{
+
+    .modal-top h3 {
         color: white;
     }
-    .modal-top p{
+
+    .modal-top p {
         color: #989898;
     }
-    .modal svg{
+
+    .modal svg {
         color: white;
     }
-    .modal-seperator{
+
+    .modal-seperator {
         background-color: #2B2B2B;
     }
-    .modal form label{
+
+    .modal form label {
         color: white;
     }
-    .modal form input[type="file"]::-webkit-file-upload-button {
+
+    .modal input[type="file"]::-webkit-file-upload-button {
         background-color: #242424;
         color: white;
     }
-    .modal input, .modal textarea{
+
+    .modal input[type="file"]::-webkit-file-upload-button:hover {
+        background-color: #2e2e2e;
+    }
+
+    .modal input,
+    .modal textarea {
         color: white;
         border: 1px solid #383838;
         background-color: #242424;
     }
-    .modal input::placeholder{
+
+    .modal input::placeholder {
         color: #656566;
     }
+
     .modal-input-group input:-webkit-autofill,
     .modal-input-group textarea:-webkit-autofill {
         -webkit-box-shadow: 0 0 0px 1000px rgba(4, 143, 230, 0.05) inset;
@@ -267,36 +379,37 @@ textarea::-webkit-scrollbar-button{
         transition: background-color 5000s ease-in-out 0s;
     }
 }
-input[type="checkbox"] {
-    accent-color: #048FE6;
-}
-.modal-checks-wrapper{
+
+.modal-checks-wrapper {
     display: grid;
     grid-template-columns: 1fr 1fr;
     row-gap: 8px;
+    column-gap: 16px;
 }
 
 @media (max-width: 600px) {
     .modal {
         width: 90vw;
         max-width: 400px;
-        padding: 32px;
     }
-    .modal svg{
-        transform: translateY(0px);
+
+    .modal svg {
+        transform: none;
     }
+
     .modal-top-wrapper {
         flex-direction: column;
         align-items: flex-start;
         gap: 16px;
         width: 100%;
-    } 
+    }
+
     .modal-top-wrapper svg {
         position: absolute;
         top: 24px;
         right: 24px;
-        transform: none;
     }
+
     .modal-top-content h3 {
         font-size: 24px;
     }

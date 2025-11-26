@@ -127,20 +127,20 @@
     </div>
     
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const messageElements = document.querySelectorAll('#django-messages .django-message');
+        document.addEventListener('DOMContentLoaded', () => {
+            const djangoMessages = document.querySelectorAll('#django-messages .django-message');
+            djangoMessages.forEach(msgEl => {
+                const rawTags = msgEl.dataset.level || '';
+                const tags = rawTags.toLowerCase().split(/\s+/);
+                const text = msgEl.textContent.trim();
+                if (!text) return;
 
-            messageElements.forEach(el => {
-                const text = el.textContent.trim();
-                let level = el.dataset.level || 'danger';
-                
-                if (level.includes('success')) level = 'success';
-                else if (level.includes('error') || level.includes('danger')) level = 'danger';
-                else if (level.includes('warning')) level = 'warning';
-                else if (level.includes('info')) level = 'info';
-                else level = 'danger'; 
+                let type = 'success';
+                if (tags.includes('danger')) type = 'danger';
+                else if (tags.includes('success')) type = 'success';
+                else if (tags.includes('info')) type = 'success';
 
-                showPopupAlert(text, level, 4000); 
+                showPopupAlert(text, type, 4000);
             });
         });
     </script>

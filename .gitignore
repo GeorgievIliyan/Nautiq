@@ -40,5 +40,9 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
+# Misc
+beach_images/
+proof_images/
+
 # Other temporary files
 *~
