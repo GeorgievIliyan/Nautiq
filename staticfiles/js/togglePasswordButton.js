@@ -17,13 +17,16 @@ if (inputElement && toggleBtn) {
         inputElement.type = 'text'
         toggleBtn.className = 'bi bi-eye-slash-fill toggle-btn'
     })
-
     toggleBtn.addEventListener('mouseup', hidePassword)
     toggleBtn.addEventListener('mouseleave', hidePassword)
+
+    toggleBtn.addEventListener('touchstart', () => {
+        inputElement.type = 'text'
+        toggleBtn.className = 'bi bi-eye-slash-fill toggle-btn'
+    })
+    toggleBtn.addEventListener('touchend', hidePassword)
 }
 
 if (form) {
-    form.addEventListener('submit', () => {
-        hidePassword()
-    })
+    form.addEventListener('submit', hidePassword)
 }

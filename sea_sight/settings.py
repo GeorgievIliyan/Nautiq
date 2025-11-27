@@ -10,7 +10,11 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['nautiq-production.up.railway.app']
+ALLOWED_HOSTS = [
+    'nautiq-production.up.railway.app',
+    'localhost',
+    '127.0.0.1',
+]
 
 INSTALLED_APPS = [
     'widget_tweaks',
