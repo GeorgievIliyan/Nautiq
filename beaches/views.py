@@ -224,7 +224,7 @@ def account_view(request):
     if profile.profile_picture:
         pfp_url = profile.profile_picture.url
     else:
-        pfp_url = static("default.webp") 
+        pfp_url = static("default.webp")
 
     context = {
         "user": user,
@@ -236,6 +236,7 @@ def account_view(request):
         "lng": profile.lng,
         "pfp": pfp_url,
         "level": profile.level,
+        "timestamp": int(timezone.now().timestamp()),
         "xp": profile.xp,
         "compl": profile.tasks_completed,
         "logs": models.BeachLog.objects.filter(user = user).count,
@@ -358,6 +359,9 @@ def map_view(request):
                     beach = models.Beach.objects.create(
                         name=beach_add_form.cleaned_data["name"],
                         description=beach_add_form.cleaned_data["description"],
+                        type = beach_add_form.cleaned_data['type'],
+                        swimming_allowed = beach_add_form.cleaned_data["swimming_allowed"],
+                        fishing_allowed = beach_add_form.cleaned_data['fishing_allowed'],
                         latitude=beach_add_form.cleaned_data["latitude"],
                         longitude=beach_add_form.cleaned_data["longitude"],
                         has_lifeguard=beach_add_form.cleaned_data["has_lifeguard"],
@@ -377,7 +381,7 @@ def map_view(request):
                             beach.delete()
                         return redirect("map")
 
-                    prompts = ["beach or shoreline or coast"]
+                    prompts = ["beach", 'sea', "lake", "body of water"]
                     _, confidence, _ = validate_image_with_clip(image_file, prompts)
                     print(f"[DEBUG] CLIP match confidence: {confidence}")
 
@@ -931,3 +935,4 @@ def tasks_view(request):
     }
 
     return render(request, "app/gamification/tasks.html", context)
+

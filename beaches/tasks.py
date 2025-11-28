@@ -1,4 +1,3 @@
-# beaches/tasks.py
 from celery import shared_task
 from .utils import generate_daily_tasks
 

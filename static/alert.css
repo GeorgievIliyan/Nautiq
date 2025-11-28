@@ -166,6 +166,9 @@
         background-color: rgba(230, 57, 70, 0.15);
         border-color: #E63946;
     }
+    .popup-alert-danger svg, .popup-alert-danger i{
+        color: #E63946;
+    }
 
     .popup-alert-success {
         background-color: rgba(46, 204, 113, 0.15);

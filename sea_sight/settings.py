@@ -104,7 +104,7 @@ LOGIN_URL = 'login'
 REGISTER_URL = 'register'
 AUTH_USER_MODEL = 'beaches.User'
 
-JAWG_ACCESS_TOKEN = os.getenv('JAWG_ACCESS_TOKEN')
+JAWG_ACCESS_TOKEN = 'fBhrNXsJ3GeYZ3yLVuB5P8SCMynEsxbAAuGpgoBZ9Ee2M8MDbfpouRrXj1wFKkCM'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

@@ -245,8 +245,8 @@ form label {
 form input {
     border-radius: 10px;
     padding: 16px;
-    border: 1px solid #EEEEEE;
-    background-color: #fcfcfc;
+    border: 1px solid #EFEFEF;
+    background-color: #f3f3f3;
     color: #222222;
     font-family: "Onest", sans-serif;
     font-size: 18px;

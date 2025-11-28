@@ -19,9 +19,9 @@ from django.db import models
 
 class Task(models.Model):
     DIFFICULTY_CHOICES = [
-        ('easy', 'Easy'),
-        ('medium', 'Medium'),
-        ('hard', 'Hard'),
+        ('easy', 'Лесно'),
+        ('medium', 'Средно'),
+        ('hard', 'Трудно'),
     ]
 
     CATEGORY_CHOICES = [
@@ -106,6 +106,11 @@ class MonthlyStats(models.Model):
 
 #* ===== APP MODELS ===== *#
 class Beach(models.Model):
+    TYPE_CHOICES = (
+        ('beach', 'Плаж'),
+        ('lake', 'Езеро'),
+        ('dam', 'Язовир'),
+    )
     has_been_approved = models.BooleanField(default=False)
     approved_date = models.DateTimeField(null=True, blank=True)
     
@@ -116,6 +121,7 @@ class Beach(models.Model):
     )
     
     name = models.CharField(max_length=50)
+    type = models.CharField(max_length=100, null=True, blank=True, default="beach")
     description = models.TextField(max_length=250, null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
@@ -127,6 +133,8 @@ class Beach(models.Model):
     #* PARKING & CAR RELATED
     has_parking = models.BooleanField(default=False)
     has_paid_parking = models.BooleanField(default=False)
+    swimming_allowed = models.BooleanField(default=False)
+    fishing_allowed = models.BooleanField(default=False)
     
     #* MISC
     has_toilets = models.BooleanField(default=False)
@@ -161,51 +169,64 @@ class BeachLog(models.Model):
     )
     
     WAVE_CHOICES = (
-        ('Големи', 'high'),
-        ('Средни', 'medium'),
-        ('Малки', 'small'),
+        ('high', 'Големи'),
+        ('medium', 'Средни'),
+        ('small', 'Малки'),
     )
+
     PARKING_SPACE_CHOICES = (
-        ('Много', 'high'),
-        ('Средно', 'medium'),
-        ('Малко', 'low'),
-        ('Няма', 'none'),
+        ('high', 'Много'),
+        ('medium', 'Средно'),
+        ('low', 'Малко'),
+        ('none', 'Няма'),
     )
+
     KIDS_AMOUNT_CHOICES = (
-        ('Много', 'high'),
-        ('Средно', 'medium'),
-        ('Малко', 'low'),
-        ('Няма', 'none'),
+        ('high', 'Много'),
+        ('medium', 'Средно'),
+        ('low', 'Малко'),
+        ('none', 'Няма'),
     )
+
     ALGAE_VOLUME_CHOICES = (
-        ('Много', 'high'),
-        ('Средно', 'medium'),
-        ('Малко', 'low'),
-        ('Няма', 'none'),
+        ('high', 'Много'),
+        ('medium', 'Средно'),
+        ('low', 'Малко'),
+        ('none', 'Няма'),
     )
+
     WATER_TEMPERATURE_CHOICES = (
-        ('Гореща', 'hot'),
-        ('Топла', 'warm'),
-        ('Нормална', 'normal'),
-        ('Хладна', 'cool'),
-        ('Студена', 'cold'),
+        ('hot', 'Гореща'),
+        ('warm', 'Топла'),
+        ('normal', 'Нормална'),
+        ('cool', 'Хладна'),
+        ('cold', 'Студена'),
     )
+
     WEATHER_CONDITION_CHOICES = (
-        ('Горещо', 'hot'),
-        ('Топло', 'warm'),
-        ('Нормално', 'normal'),
-        ('Хладко', 'cool'),
-        ('Студено', 'cold'),
+        ('hot', 'Горещо'),
+        ('warm', 'Топло'),
+        ('normal', 'Нормално'),
+        ('cool', 'Хладко'),
+        ('cold', 'Студено'),
     )
+
     CROWD_LEVEL_CHOICES = (
-        ('Високо', 'high'),
-        ('Средно', 'medium'),
-        ('Ниско', 'low'),
+        ('high', 'Високо'),
+        ('medium', 'Средно'),
+        ('low', 'Ниско'),
     )
+
     WATER_CLARITY_CHOICES = (
-        ('Облачна', 'cloudy'),
-        ('Мътна', 'murky'),
-        ('Ясна', 'clear'),
+        ('cloudy', 'Облачна'),
+        ('murky', 'Мътна'),
+        ('clear', 'Ясна'),
+    )
+
+    FLAG_CHOICES = (
+        ('red','Червен'),
+        ('yellow','Жълт'),
+        ('green','Зелен')
     )
     
     beach = models.ForeignKey(Beach, on_delete=models.CASCADE)
@@ -267,6 +288,25 @@ class BeachLog(models.Model):
         choices=PARKING_SPACE_CHOICES,
         default='low',
         blank=True
+    )
+
+    flag = models.CharField(
+        max_length=50,
+        choices=FLAG_CHOICES,
+        default="yellow",
+        blank=True
+    )
+
+    fishing_allowed = models.BooleanField(
+        blank=True,
+        null=True,
+        default=False,
+    )
+    
+    swimming_allowed = models.BooleanField(
+        blank=True,
+        default=False,
+        null=True
     )
     
     note = models.TextField(max_length=300, blank=True)

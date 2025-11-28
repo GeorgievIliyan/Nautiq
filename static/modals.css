@@ -259,20 +259,21 @@ textarea::-webkit-scrollbar {
 
 select {
     font-family: "Onest", sans-serif;
-    font-size: 16px;
+    font-size: 14px;
     color: #222222;
     background-color: #fcfcfc;
     border: 1px solid #EEEEEE;
-    border-radius: 10px;
-    padding: 12px 18px 12px 8px;
+    border-radius: 7.5px;
+    padding: 8px;
     cursor: pointer;
     outline: none;
-    transition: border 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    transition: border 0.25s ease-in-out, box-shadow 0.25s ease-in-out, background-color 0.25s ease-in-out;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
     width: 100%;
     box-sizing: border-box;
+    margin-bottom: 8px;
 }
 
 select:focus {
@@ -330,6 +331,7 @@ select::-moz-focus-inner {
 @media(prefers-color-scheme: dark) {
     .modal {
         background-color: #1F1F21;
+        box-shadow: rgba(44, 44, 44, 0.2) 0px 0px 20px;
     }
 
     .modal-top h3 {

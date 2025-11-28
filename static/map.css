@@ -306,8 +306,13 @@ hr {
     margin-top: 16px;
     margin-bottom: 16px;
 }
-
+.d-none{
+    display: none;
+}
 @media(prefers-color-scheme: dark){
+    body{
+        background-color: #1c1c1c;
+    }
     .info-panel{
         color: #ffffff;
         background-color: #242424;

@@ -8,8 +8,8 @@
         <div class="modal-top">
             <div class="modal-top-wrapper">
                 <div class="modal-top-content">
-                    <h3>Нов плаж</h3>
-                    <p>Плажът ще бъде публичен, след като <br>заявката ви бъде одобрена от администратор</p>
+                    <h3><i class="bi bi-geo-alt-fill"></i> Нова локация</h3>
+                    <p>Локацията ще бъде публичена, след като <br>заявката ви бъде одобрена от администратор</p>
                 </div>
                 <svg xmlns="http://www.w3.org/2000/svg" onclick="closeAddModal()" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
                     <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
@@ -21,10 +21,10 @@
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="form_type" value="add_beach">
-                {% for hidden in beach_add_form.hidden_fields %}{{ hidden }}{% endfor %}
 
                 {% for field in beach_add_form %}
-                    {% if field.field.widget.input_type != 'checkbox' and field.field.widget.input_type != 'radio' and field.field.widget.input_type != 'multiple' and field.field.widget.input_type != 'select' %}
+                    {% if field.is_hidden %} 
+                    {% elif field.field.widget.input_type != 'checkbox' and field.field.widget.input_type != 'radio' and field.field.widget.input_type != 'multiple' and field.field.widget.input_type != 'select' %}
                         <div class="modal-input-group">
                             {{ field.label_tag }}
                             {{ field|add_class:"form-control" }}
@@ -60,7 +60,7 @@
         <div class="modal-top">
             <div class="modal-top-wrapper">
                 <div class="modal-top-content">
-                    <h3>Докладвайте условия</h3>
+                    <h3><i class="bi bi-journal-plus"></i> Докладвайте условия</h3>
                     <p>Промените Ви ще бъдат отразени веднага</p>
                 </div>
                 <svg xmlns="http://www.w3.org/2000/svg" onclick="closeLogsModal()" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
@@ -113,7 +113,7 @@
         <div class="modal-top">
             <div class="modal-top-wrapper">
                 <div class="modal-top-content">
-                    <h3>Сигнал</h3>
+                    <h3><i class="bi bi-flag"></i> Сигнал</h3>
                     <p>Сигналът Ви ще бъде разгледан от модератор.</p>
                 </div>
                 <svg xmlns="http://www.w3.org/2000/svg" onclick="closeReportModal()" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">

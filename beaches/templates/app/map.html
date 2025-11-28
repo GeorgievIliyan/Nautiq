@@ -15,7 +15,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="{% static 'modals.css' %}">
     <link rel="stylesheet" href="{% static 'map.css' %}?v={{ timestamp }}">
-    <link rel="stylesheet" href="{% static 'alert.css' %}">
+    <link rel="stylesheet" href="{% static 'alert.css' %}?={{ timestamp }}">
     <link rel="stylesheet" href="{% static 'nav.css' %}">
     <!--FAVICON-->
     <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.svg' %}">
@@ -215,8 +215,12 @@
                 return false;
             }
             const dist=getDistanceMeters(REAL_USER_LAT,REAL_USER_LNG,lat,lng);
-            if(dist>300){
+            if(dist>300 && dist <= 999){
                 showPopupAlert(`Трябва да сте в радиус от 300м до плажа! Вашата дистанция: ${Math.round(dist)} м.`, "danger",8000);
+                return false;
+            }
+            else if (dist >= 1000){
+                showPopupAlert(`Трябва да сте в радиус от 300м до плажа! Вашата дистанция: ${((Math.round(dist)) / 1000).toFixed(1)} km.`, "danger",8000);
                 return false;
             }
             return true;

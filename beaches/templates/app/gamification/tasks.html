@@ -12,7 +12,7 @@
     <!--CSS-->
     <link rel="stylesheet" href="{% static 'alert.css' %}">
     <link rel="stylesheet" href="{% static 'nav.css' %}">
-    <link rel="stylesheet" href="{% static 'tasks.css' %}">
+    <link rel="stylesheet" href="{% static 'tasks.css' %}?v={{timestamp}}">
     <!--Bootstrap icons-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 </head>
@@ -29,12 +29,16 @@
         {% endif %}
     </div>
     
-    <h1>Готов ли си?</h1>
+    <center><h1>Готов ли си?</h1></center>
     <p class="xp-next">Само {{ xp_next }}XP до следващото ниво!</p>
 
     <div class="task-wrapper">
         {% for task in tasks %}
-            <div class="task {% if task.id in completed_ids %} completed {% endif %}">
+           <div class="task
+                {% if task.id in completed_ids %} completed{% elif task.id in accepted_ids %} accepted{% endif %}
+                {% if task.difficulty %} {{ task.difficulty }}{% endif %}
+            ">
+
                 <h2 class="task-title">{{ task.title }}</h2>
                 <p class="task-desc">{{ task.user_desc }}</p>
                 <p class="task-reward"><i class="bi bi-star-fill"></i> {{ task.reward }} XP</p>

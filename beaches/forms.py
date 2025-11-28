@@ -50,18 +50,12 @@ class BeachAddForm(forms.Form):
     latitude = forms.DecimalField(
         max_digits=20,
         decimal_places=18,
-        label="Широчина",
-        widget=forms.TextInput(
-            attrs={"readonly": "readonly", "class": "form-control"}
-        )
+        widget=forms.HiddenInput()
     )
     longitude = forms.DecimalField(
         max_digits=20,
         decimal_places=18,
-        label="Дължина",
-        widget=forms.TextInput(
-            attrs={"readonly": "readonly", "class": "form-control"}
-        )
+        widget=forms.HiddenInput()
     )
     image = forms.ImageField(
         required=True,
@@ -72,21 +66,24 @@ class BeachAddForm(forms.Form):
         max_length=100,
         min_length=5,
         required=True,
-        label="Име на плажа:"
+        label="Име на локацията:"
     )
+    type = forms.CharField(max_length=100, widget=forms.Select(choices= models.Beach.TYPE_CHOICES), label="Тип")
     description = forms.CharField(
         max_length=250,
         label="Кратко описание:",
         required=False,
         widget=forms.Textarea
     )
-    has_lifeguard = forms.BooleanField(required=False, label="Спасител:")
-    has_parking = forms.BooleanField(required=False, label="Паркинг:")
-    has_paid_parking = forms.BooleanField(required=False, label="Платен паркинг:")
-    has_toilets = forms.BooleanField(required=False, label="Тоалетни:")
-    has_changing_rooms = forms.BooleanField(required=False, label="Съблекални:")
-    has_paid_zone = forms.BooleanField(required=False, label="Платена зона:")
-    has_beach_bar = forms.BooleanField(required=False, label="Заведения:")
+    swimming_allowed = forms.BooleanField(required=False, label="Плуване разрешено")
+    fishing_allowed = forms.BooleanField(required=False, label="Риболов разрешен")
+    has_lifeguard = forms.BooleanField(required=False, label="Спасител")
+    has_parking = forms.BooleanField(required=False, label="Паркинг")
+    has_paid_parking = forms.BooleanField(required=False, label="Платен паркинг")
+    has_toilets = forms.BooleanField(required=False, label="Тоалетни")
+    has_changing_rooms = forms.BooleanField(required=False, label="Съблекални")
+    has_paid_zone = forms.BooleanField(required=False, label="Платена зона")
+    has_beach_bar = forms.BooleanField(required=False, label="Заведения")
     
 class BeachEditForm(forms.ModelForm):
     class Meta:
@@ -128,6 +125,12 @@ class LogBeachForm(forms.Form):
     image = forms.ImageField(required=True, label="Снимка")
     
     # Conditions
+    flag = forms.ChoiceField(
+        choices=models.BeachLog.FLAG_CHOICES,
+        required=True,
+        label="Флаг"
+    )
+
     crowd_level = forms.ChoiceField(
         choices=models.BeachLog.CROWD_LEVEL_CHOICES,
         required=True,
