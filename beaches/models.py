@@ -111,14 +111,11 @@ class Beach(models.Model):
         ('lake', 'Езеро'),
         ('dam', 'Язовир'),
     )
+    
     has_been_approved = models.BooleanField(default=False)
     approved_date = models.DateTimeField(null=True, blank=True)
     
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
     name = models.CharField(max_length=50)
     type = models.CharField(max_length=100, null=True, blank=True, default="beach")
@@ -127,28 +124,30 @@ class Beach(models.Model):
     longitude = models.FloatField(null=True, blank=True)
     rating = models.FloatField(default=default_rating)
     
-    #* SAFETY
+    # SAFETY
     has_lifeguard = models.BooleanField(default=False)
     
-    #* PARKING & CAR RELATED
+    # PARKING & CAR RELATED
     has_parking = models.BooleanField(default=False)
     has_paid_parking = models.BooleanField(default=False)
     swimming_allowed = models.BooleanField(default=False)
     fishing_allowed = models.BooleanField(default=False)
     
-    #* MISC
+    # MISC
     has_toilets = models.BooleanField(default=False)
     has_changing_rooms = models.BooleanField(default=False)
     
-    #* LUXURIES
+    # LUXURIES
     has_paid_zone = models.BooleanField(default=False)
     has_beach_bar = models.BooleanField(default=False)
     
-    #* FAVOURITES  
+    # FAVOURITES
     favourites = models.ManyToManyField(User, related_name="favourite_beaches", blank=True)
     
     def __str__(self):
-        return f"{self.name}: {self.latitude},{self.longitude}"
+        lat = self.latitude if self.latitude is not None else "N/A"
+        lon = self.longitude if self.longitude is not None else "N/A"
+        return f"{self.name}: {lat},{lon}"
 
 class BeachImage(models.Model):
     title = models.CharField(max_length=100, null=True, blank=True)
