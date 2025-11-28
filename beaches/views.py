@@ -638,6 +638,13 @@ def favourite_beaches(request):
 
 
 #* ===== MODERATION ===== *#
+@login_required
+def redirection_view(request):
+    if request.user.is_superuser:
+        return redirect('dashboard_mod')
+    else:
+        return redirect('homepage')  
+
 @user_passes_test(is_moderator)
 @login_required
 def dashboard_mod(request):

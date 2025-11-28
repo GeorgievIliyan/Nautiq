@@ -9,9 +9,9 @@
     <title>Nautiq | Табло</title>
     <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.svg' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{% static 'dashboard.css' %}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{% static 'dashboard.css' %}">
     <link rel="stylesheet" href="{% static 'nav.css' %}">
-    <link rel="stylesheet" href="{% static 'alerts.css' %}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{% static 'alert.css' %}?={{ timestamp }}">
 </head>
 <style>
     .dashboard-top{
@@ -26,7 +26,7 @@
     <div id="popup-alert-container"></div>
 
     {% if messages %}
-        <div id="django-messages" style="display:none !important;">
+        <div id="django-messages">
             {% for message in messages %}
                 <div class="django-message" data-level="{{ message.tags }}">{{ message }}</div>
             {% endfor %}
@@ -147,23 +147,5 @@
     </script>
     <script src="{% static 'js/closeAlert.js' %}"></script>
     <script src="{% static 'js/popupAlert.js' %}"></script>
-    <!--ALERTS-->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const djangoMessages = document.querySelectorAll('#django-messages .django-message');
-            djangoMessages.forEach(msgEl => {
-                const rawTags = msgEl.dataset.level || '';
-                const tags = rawTags.toLowerCase().split(/\s+/);
-                const text = msgEl.textContent.trim();
-                if (!text) return;
-
-                let type = 'success';
-                if (tags.includes('danger')) type = 'danger';
-                else if (tags.includes('success')) type = 'success';
-                else if (tags.includes('info')) type = 'success';
-                showPopupAlert(text, type, 4000);
-            });
-        });
-    </script>
 </body>
 </html>

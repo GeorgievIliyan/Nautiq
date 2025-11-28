@@ -16,6 +16,9 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
 ]
 
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+
 INSTALLED_APPS = [
     'widget_tweaks',
     
