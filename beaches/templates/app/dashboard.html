@@ -109,8 +109,8 @@
                     <div class="stats-number">
                         {{ profile.tasks_completed }}
                     </div>
-                    <span class="{% if xp_change.is_up %}stats-tag-blue{% else %}stats-tag-red{% endif %}">
-                        {{ tasks_change.percent }} спрямо миналия месец
+                    <span class="stats-tag-blue">
+                        за целия период
                     </span>
                 </div>
             </div>
@@ -126,8 +126,8 @@
                     <div class="stats-number">
                         {{ profile.xp }}
                     </div>
-                    <span class="{% if tasks_change.is_up %}stats-tag-blue{% else %}stats-tag-red{% endif %}">
-                        {{ xp_change.percent }} спрямо миналия месец
+                    <span class="stats-tag-blue">
+                        за целия период
                     </span>
                 </div>
             </div>
