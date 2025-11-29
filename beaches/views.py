@@ -299,34 +299,6 @@ def dashboard(request):
         "current_user": current_user_data,
     }
 
-    print(f"Leaderboard Data Count: {len(leaderboard_data)}")
-    print(f"First Leaderboard Entry: {leaderboard_data[0] if leaderboard_data else 'List is empty'}")
-    
-    today = datetime.date.today()
-    current_month_start = today.replace(day=1)
-    
-    last_month_end = current_month_start - datetime.timedelta(days=1)
-    last_month_start = last_month_end.replace(day=1)
-
-    current_tasks_count = models.BeachLog.objects.filter(
-        user=user, 
-        created_at__gte=current_month_start
-    ).count()
-
-    previous_tasks_count = models.BeachLog.objects.filter(
-        user=user, 
-        created_at__gte=last_month_start, 
-        created_at__lt=current_month_start
-    ).count()
-
-    percent_change = 0.0
-    if previous_tasks_count > 0:
-        percent_change = ((current_tasks_count - previous_tasks_count) / previous_tasks_count) * 100
-    elif current_tasks_count > 0:
-        percent_change = 100.0
-    
-    tasks_change_percent = round(percent_change, 2)
-
     if user.is_first_login:
         return redirect("enter_details")
 
