@@ -6,7 +6,7 @@ from django.conf.urls.static import static
 from beaches import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls, name='admin'),
     
     #* APP URLS
     path('', include('beaches.urls')),

@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!--Favicon-->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/logo/logo.svg' %}">
 </head>
 <body>
     <!-- Header -->
@@ -158,7 +160,7 @@
                     <a href="#about" class="footer-link">За Нас</a>
                     <a href="#privacy" class="footer-link">Поверителност</a>
                     <a href="#terms" class="footer-link">Условия</a>
-                    <a href="#support" class="footer-link">Поддръжка</a>
+                    <a href="{% url 'admin:index' %}" class="footer-link">Модерация</a>
                 </div>
             </div>
             

@@ -290,21 +290,25 @@ def dashboard(request):
     xp_change = build_change(previous_stats, monthly_stats, "xp")
     tasks_change = build_change(previous_stats, monthly_stats, "tasks_completed")
 
-    leaderboard = models.MonthlyStats.objects.filter(month=current_month).order_by('-xp')[:10]
+    leaderboard = models.MonthlyStats.objects.filter(
+        month=current_month
+    ).order_by('-xp')[:10]
 
     leaderboard_data = []
     for idx, stats in enumerate(leaderboard, start=1):
+
+        if stats.user.profile_picture:
+            profile_img = stats.user.profile_picture.url
+        else:
+            profile_img = "/static/default.webp"
+
         leaderboard_data.append({
             'place': f"#{idx}",
             'username': stats.user.user.username,
             'score': stats.xp,
             'tasks_completed': stats.tasks_completed,
             'is_current_user': stats.user == profile,
-            'profile_img': (
-                stats.user.profile_img_url
-                if hasattr(stats.user, 'profile_img_url')
-                else "https://tinyurl.com/bdz6jnxj"
-            )
+            'profile_img': profile_img,
         })
 
     context = {
