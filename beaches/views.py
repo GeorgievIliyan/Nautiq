@@ -43,6 +43,7 @@ from validators.numbers_validator import is_valid_number as has_number
 from validators.uppercase_validator import is_valid_uppercase as has_uppercase
 from difflib import SequenceMatcher
 import uuid
+import datetime
 
 from io import BytesIO
 from PIL import Image
@@ -259,71 +260,77 @@ def dashboard(request):
     user = request.user
     profile = models.UserProfile.objects.get(user=user)
 
-    current_month = date.today().replace(day=1)
-
-    monthly_stats, created = models.MonthlyStats.objects.get_or_create(
-        user=profile,
-        month=current_month,
-        defaults={'tasks_completed': 0, 'xp': 0}
-    )
-
-    previous_stats = models.MonthlyStats.objects.filter(
-        user=profile
-    ).exclude(month=current_month).order_by('-month').first()
-
-    def build_change(prev, curr, field):
-        if not prev:
-            return {"percent": "+0%", "is_up": True}
-
-        prev_val = getattr(prev, field)
-        curr_val = getattr(curr, field)
-
-        if prev_val == 0:
-            return {"percent": "+0%", "is_up": curr_val > 0}
-
-        diff = round(((curr_val - prev_val) / prev_val) * 100)
-        is_up = diff >= 0
-        percent_str = f"{'+' if diff >= 0 else ''}{diff}%"
-
-        return {"percent": percent_str, "is_up": is_up}
-
-    xp_change = build_change(previous_stats, monthly_stats, "xp")
-    tasks_change = build_change(previous_stats, monthly_stats, "tasks_completed")
-
-    leaderboard = models.MonthlyStats.objects.filter(
-        month=current_month
-    ).order_by('-xp')[:10]
+    all_profiles = models.UserProfile.objects.select_related("user").order_by('-xp')
 
     leaderboard_data = []
-    for idx, stats in enumerate(leaderboard, start=1):
+    current_user_place = None
 
-        if stats.user.profile_picture:
-            profile_img = stats.user.profile_picture.url
-        else:
-            profile_img = "/static/default.webp"
+    for idx, prof in enumerate(all_profiles, start=1):
+        profile_img = prof.profile_picture.url if prof.profile_picture else "/static/default.webp"
+
+        is_current_user = (prof == profile)
+        if is_current_user:
+            current_user_place = idx
 
         leaderboard_data.append({
-            'place': f"#{idx}",
-            'username': stats.user.user.username,
-            'score': stats.xp,
-            'tasks_completed': stats.tasks_completed,
-            'is_current_user': stats.user == profile,
-            'profile_img': profile_img,
+            "place": f"#{idx}",
+            "username": prof.user.username,
+            "score": prof.xp,
+            "tasks_completed": prof.tasks_completed,
+            "profile_img": profile_img,
+            "is_current_user": is_current_user,
         })
 
+    current_user_data = None
+    if current_user_place is not None:
+        current_user_data = {
+            "place": f"#{current_user_place}",
+            "username": profile.user.username,
+            "score": profile.xp,
+            "tasks_completed": profile.tasks_completed,
+            "profile_img": profile.profile_picture.url if profile.profile_picture else "/static/default.webp",
+            "is_current_user": True,
+        }
+
     context = {
-        'user': user,
-        'profile': profile,
-        'monthly_stats': monthly_stats,
-        'leaderboard': leaderboard_data,
-        'xp_change': xp_change,
-        'tasks_change': tasks_change,
+        "user": user,
+        "profile": profile,
+        "leaderboard": leaderboard_data,
+        "current_user": current_user_data,
     }
 
-    if user.is_first_login:
-        return redirect('enter_details')
+    print(f"Leaderboard Data Count: {len(leaderboard_data)}")
+    print(f"First Leaderboard Entry: {leaderboard_data[0] if leaderboard_data else 'List is empty'}")
+    
+    today = datetime.date.today()
+    current_month_start = today.replace(day=1)
+    
+    last_month_end = current_month_start - datetime.timedelta(days=1)
+    last_month_start = last_month_end.replace(day=1)
 
-    return render(request, 'app/dashboard.html', context)
+    current_tasks_count = models.BeachLog.objects.filter(
+        user=user, 
+        created_at__gte=current_month_start
+    ).count()
+
+    previous_tasks_count = models.BeachLog.objects.filter(
+        user=user, 
+        created_at__gte=last_month_start, 
+        created_at__lt=current_month_start
+    ).count()
+
+    percent_change = 0.0
+    if previous_tasks_count > 0:
+        percent_change = ((current_tasks_count - previous_tasks_count) / previous_tasks_count) * 100
+    elif current_tasks_count > 0:
+        percent_change = 100.0
+    
+    tasks_change_percent = round(percent_change, 2)
+
+    if user.is_first_login:
+        return redirect("enter_details")
+
+    return render(request, "app/dashboard.html", context)
 
 @login_required
 def map_view(request):

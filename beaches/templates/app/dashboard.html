@@ -40,41 +40,61 @@
     </div>
 
     <div class="dashboard-wrapper">
-        <div class="leaderboard">
-            <h2>Класация</h2>
-                <div class="leaderboard-top">
-                    {% for lb in leaderboard|slice:":3" %}
-                    <div class="leaderboard-top-box">
-                        <div class="medal {% if forloop.counter == 1 %}medal-gold{% elif forloop.counter == 2 %}medal-silver{% else %}medal-bronze{% endif %}">
-                            <i class="bi bi-trophy"></i>
-                        </div>
-                        <p>{{ lb.username }}</p>
-                        <span class="top-points">{{ lb.score }}</span>
-                    </div>
-                    {% endfor %}
-                </div>
+       <div class="leaderboard">
+    <h2>Класация</h2>
 
-                <h3>Пълна класация</h3>
-                <div class="full-leaderboard">
-                    {% for lb in leaderboard %}
-                    <div class="leaderboard-place">
-                        <div class="account-wrappper">
-                            <span class="place">{{ lb.place }}</span>
-                            <img src="{{ lb.profile_img }}" alt="user-pfp" class="user-pfp">
-                            <div class="user-wrapper">
-                                <div class="flex-row">
-                                    <span class="username">{{ lb.username }}</span>
-                                    {% if lb.is_current_user %}
-                                        <span class="you-tag">Вие</span>
-                                    {% endif %}
-                                </div>
-                                <span class="user-stats">{{ lb.tasks_completed }}</span>
+    <!-- TOP 3 -->
+    <div class="leaderboard-top">
+        {% for lb in leaderboard|slice:":3" %}
+        <div class="leaderboard-top-box">
+            <div class="medal 
+                {% if forloop.counter == 1 %}medal-gold
+                {% elif forloop.counter == 2 %}medal-silver
+                {% else %}medal-bronze{% endif %}">
+                <i class="bi bi-trophy"></i>
+            </div>
+
+            <p>{{ lb.username }}</p>
+            <span class="top-points">{{ lb.score }}</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h3>Пълна класация</h3>
+        <!-- FULL LEADERBOARD -->
+        <div class="full-leaderboard">
+                {% for lb in leaderboard %}
+                <div class="leaderboard-place">
+                    <div class="account-wrapper">
+
+                        <!-- #1, #2, #3, etc. -->
+                        <span class="place">{{ lb.place }}</span>
+
+                        <!-- User picture -->
+                        <img src="{{ lb.profile_img }}" alt="user-pfp" class="user-pfp">
+
+                        <div class="user-wrapper">
+                            <div class="flex-row">
+
+                                <!-- Username -->
+                                <span class="username">{{ lb.username }}</span>
+
+                                <!-- Highlight current user -->
+                                {% if lb.is_current_user %}
+                                    <span class="you-tag">Вие</span>
+                                {% endif %}
                             </div>
+
+                            <!-- Monthly tasks completed -->
+                            <span class="user-stats">{{ lb.tasks_completed }}</span>
                         </div>
-                        <span class="score">{{ lb.score | k_format }}</span>
                     </div>
-                    {% endfor %}
+
+                    <!-- Score formatted with k_format -->
+                    <span class="score">{{ lb.score|k_format }}</span>
                 </div>
+                {% endfor %}
+            </div>
         </div>
 
         <div class="stats-wrapper">
@@ -87,7 +107,7 @@
                 </div>
                 <div class="stats-box-content">
                     <div class="stats-number">
-                        {{ monthly_stats.tasks_completed }}
+                        {{ profile.tasks_completed }}
                     </div>
                     <span class="{% if xp_change.is_up %}stats-tag-blue{% else %}stats-tag-red{% endif %}">
                         {{ tasks_change.percent }} спрямо миналия месец
